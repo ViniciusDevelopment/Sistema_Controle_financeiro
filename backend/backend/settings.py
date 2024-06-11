@@ -34,6 +34,14 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
 ]
 
+# AUTHENTICATION_BACKENDS = [
+#     'Autenticacao.views.CustomAuthToken',
+#     'django.contrib.auth.backends.ModelBackend',
+# ]
+
+# AUTH_USER_MODEL = "Autenticacao.Usuario"
+
+
 ROOT_URLCONF = 'backend.urls'
 
 TEMPLATES = [
@@ -57,7 +65,7 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'financas',
+        'NAME': 'financeiro',
         'USER': 'postgres',
         'PASSWORD': 'postgres',
         'HOST': 'localhost',
