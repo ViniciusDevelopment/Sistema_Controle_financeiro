@@ -9,12 +9,12 @@ class APIRoot(APIView):
     def get(self, request, *args, **kwargs):
         return Response({
             'Autenticacao': request.build_absolute_uri(reverse('Autenticacao:api-root')),
-            # 'Financas': request.build_absolute_uri(reverse('Financas:api-root'))
+            'Financa': request.build_absolute_uri(reverse('Financa:api-root'))
         })
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', APIRoot.as_view(), name='api-root'),
     path('api/Autenticacao', include('Autenticacao.urls', namespace='Autenticacao')),
-    # path('api/Financas', include('Financas.urls', namespace='Financas')),
+    path('api/Financa', include('Financa.urls', namespace='Financa')),
 ]

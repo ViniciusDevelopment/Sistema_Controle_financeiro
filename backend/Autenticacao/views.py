@@ -5,7 +5,7 @@ from .serializer import UserSerializer, UsuarioSerializer
 from typing import Any
 from django.http import HttpResponseRedirect
 from django.contrib import messages
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, get_user_model
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -13,11 +13,28 @@ from django.conf import settings
 from django.contrib.auth.hashers import check_password
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.models import Group, Permission, User
+from rest_framework.permissions import AllowAny
 
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer 
+
+User = get_user_model()
+
+class CreateUserAPIView(APIView):
+    permission_classes = [AllowAny]
+    def post(self, request):
+        serializer = UserSerializer(data=request.data)
+        if serializer.is_valid():
+            username = serializer.validated_data.get('username')
+            email = serializer.validated_data.get('email')
+            password = serializer.validated_data.get('password')
+            first_name = serializer.validated_data.get('first_name')
+            # Crie o novo usuário
+            new_user = User.objects.create_user(username=username, email=email, password=password, first_name=first_name)
+            return Response({'message': 'User created successfully'}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UsuarioViewSet(viewsets.ModelViewSet):
