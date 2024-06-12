@@ -7,7 +7,7 @@ SECRET_KEY = 'django-insecure-9k_g%ww#_q$-z@$nh$xa(v9xp=%^7$8g^ke8mz3!0ou67(y)a#
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['172.16.4.17']
 
 
 INSTALLED_APPS = [
@@ -45,6 +45,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware',
 ]
+
 
 # AUTHENTICATION_BACKENDS = [
 #     'Autenticacao.views.CustomAuthToken',

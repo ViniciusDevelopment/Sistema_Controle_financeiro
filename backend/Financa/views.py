@@ -1,6 +1,6 @@
 from typing import Any
 from django.shortcuts import render
-
+from rest_framework.response import Response
 from .models.conta import Conta
 from .models.categoria import Categoria
 from .models.movimentacao import Movimentacao
@@ -31,6 +31,25 @@ class MovimentacaoViewSet(viewsets.ModelViewSet):
     ]
     queryset = Movimentacao.objects.all()
     serializer_class = MovimentacaoSerializer
+
+
+class ContaAPIView(LoginRequiredMixin, TemplateView):
+    def create(self, request, *args, **kwargs):
+
+        data = request.POST
+        conta = Conta()
+
+        conta.user = data.get('user')
+        conta.nome = data.get('nome')
+        conta.imagem = request.FILES.get('imagem')
+        conta.imagem = request.FILES.get('imagem')
+
+        conta.save()
+
+        responseData = {'mensagem': 'conta Cadastrado!',}
+        status=201  
+        
+        return Response(responseData,status=status)
 
 
     

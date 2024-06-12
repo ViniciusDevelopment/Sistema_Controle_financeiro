@@ -13,7 +13,7 @@ class Movimentacao(models.Model):
     movimentado_em = models.DateTimeField()
     criado_em = models.DateTimeField(auto_now_add=True)
     atualizado_em = models.DateTimeField(auto_now=True)
-    comprovante = models.FileField(null=True)
+    comprovante = models.FileField(upload_to='Imagem/Movimentacao', null=True)
 
     def __str__(self):
         return f'Nickname: {self.descricao} | E-mail: {self.categoria}'

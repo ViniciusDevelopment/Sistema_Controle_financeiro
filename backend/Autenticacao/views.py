@@ -30,9 +30,10 @@ class CreateUserAPIView(APIView):
             username = serializer.validated_data.get('username')
             email = serializer.validated_data.get('email')
             password = serializer.validated_data.get('password')
-            first_name = serializer.validated_data.get('first_name')
+            # first_name = serializer.validated_data.get('first_name')
             # Crie o novo usuário
-            new_user = User.objects.create_user(username=username, email=email, password=password, first_name=first_name)
+            # new_user = User.objects.create_user(username=username, email=email, password=password, first_name=first_name)
+            new_user = User.objects.create_user(username=username, email=email, password=password)
             return Response({'message': 'User created successfully'}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
