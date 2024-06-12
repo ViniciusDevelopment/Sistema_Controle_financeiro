@@ -14,6 +14,7 @@ from django.contrib.auth.hashers import check_password
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.models import Group, Permission, User
 from rest_framework.permissions import AllowAny
+from rest_framework.exceptions import AuthenticationFailed
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -44,29 +45,24 @@ class UsuarioViewSet(viewsets.ModelViewSet):
 
 
 
-class LoginView(APIView):
+class TokenView(APIView):
+    permission_classes = [AllowAny]
+
     def post(self, request):
-        email = request.data.get('email')
-        senha = request.data.get('senha')
-        
-        if email is None or senha is None:
-            return Response({'error': 'Please provide both email and password'}, status=status.HTTP_400_BAD_REQUEST)
-
+        token = request.data.get('token')  # Obter o token do corpo da requisição
         try:
-            user = Usuario.objects.get(email=email)
-        except Usuario.DoesNotExist:
-            return Response({'error': 'dgdfgdInvalid Credentials'}, status=status.HTTP_404_NOT_FOUND)
+            # Decodificar o token para obter o usuário
+            token_obj = Token.objects.get(key=token)
+            user = token_obj.user
+            
+            # Recuperar os dados do usuário
+            user_data = {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+            }
+            
+            return Response(user_data)
+        except Token.DoesNotExist:
+            return Response({'detail': 'Token inválido'}, status=status.HTTP_404_NOT_FOUND)
 
-        if senha != user.senha:
-            return Response({'error': '1111Invalid Credentials'}, status=status.HTTP_404_NOT_FOUND)
-        
-        token, created = Token.objects.get_or_create(user=user)
-        return Response({'token': token.key}, status=status.HTTP_200_OK)
-    
-# class GroupViewSet(viewsets.ModelViewSet):
-#     queryset = Group.objects.all()
-#     serializer_class = GroupSerializer
-
-# class PermissionViewSet(viewsets.ModelViewSet):
-#     queryset = Permission.objects.all()
-#     serializer_class = PermissionSerializer

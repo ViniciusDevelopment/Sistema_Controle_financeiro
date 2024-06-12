@@ -31,7 +31,7 @@ export default function SignIn({ navigation }) {
       const data = await response.json();
       console.log(data);
 
-      navigation.navigate('Home', { token: `Token ${data.token}` });
+      navigation.navigate('Home', { token: data.token});
 
       // Exibe o resultado abaixo do link de cadastre-se
       // setError(null);
