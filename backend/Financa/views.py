@@ -8,6 +8,8 @@ from .serializer import CategoriaSerializer, ContaSerializer, MovimentacaoSerial
 from rest_framework import viewsets, permissions
 from django.views.generic import TemplateView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
+from rest_framework.views import APIView
+from django.contrib.auth.models import Group, Permission, User
 
 class CategoriaViewSet(viewsets.ModelViewSet):
     permission_classes = [
@@ -50,6 +52,32 @@ class ContaAPIView(LoginRequiredMixin, TemplateView):
         status=201  
         
         return Response(responseData,status=status)
+    
+
+class UserDetailView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, user_id, *args, **kwargs):
+        try:
+            user = User.objects.get(pk=user_id)
+        except User.DoesNotExist:
+            return Response({'error': 'User not found'}, status=404)
+        
+        contas = Conta.objects.filter(user=user)
+        categorias = Categoria.objects.filter(user=user)  # Supondo que categorias estão associadas a usuários
+        movimentacoes = Movimentacao.objects.filter(conta__in=contas)
+        
+        contas_serializer = ContaSerializer(contas, many=True)
+        categorias_serializer = CategoriaSerializer(categorias, many=True)
+        movimentacoes_serializer = MovimentacaoSerializer(movimentacoes, many=True)
+
+        response_data = {
+            'contas': contas_serializer.data,
+            'categorias': categorias_serializer.data,
+            'movimentacoes': movimentacoes_serializer.data
+        }
+
+        return Response(response_data, status=200)
 
 
     

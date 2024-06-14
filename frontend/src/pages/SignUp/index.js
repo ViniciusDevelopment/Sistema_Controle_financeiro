@@ -12,10 +12,6 @@ export default function SignUp({ navigation }) {
       Alert.alert('Erro', 'A senha e a confirmação de senha não correspondem.');
       return;
     }
-    
-    // Aqui você pode fazer a requisição POST para criar o usuário
-    // Certifique-se de implementar a lógica para enviar os dados para a API
-    // Você pode usar a função fetch ou uma biblioteca como axios para isso
 
     // Exemplo usando fetch:
     fetch('http://172.16.4.17:8000/api/Autenticacao/create-user', {

@@ -1,7 +1,5 @@
-// Home.js
-
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
 import axios from 'axios';
 
 export default function Home({ route }) {
@@ -9,6 +7,8 @@ export default function Home({ route }) {
   const [validationResultLocal, setValidationResultLocal] = useState(null);
   const [movimentacoes, setMovimentacoes] = useState([]);
   const [categorias, setCategorias] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const validateToken = async () => {
@@ -20,67 +20,76 @@ export default function Home({ route }) {
         console.error('Error validating token:', error);
         setValidationResultLocal({ error: 'Failed to validate token' });
         setValidationResult({ error: 'Failed to validate token' }); // Passando um erro para o MainTabs
-      }
-    };
-
-    const fetchMovimentacoes = async () => {
-            try {
-              const response = await axios.get('http://172.16.4.17:8000/api/Financa/movimentacao/', {
-                headers: {
-                  Authorization: `Token ${token}`
-                }
-              });
-              // Mapear as movimentações para incluir o nome da conta
-              const movimentacoesComNomeConta = await Promise.all(
-                response.data.map(async (movimentacao) => {
-                  // Buscar detalhes da conta usando o ID da conta
-                  const responseConta = await axios.get(`http://172.16.4.17:8000/api/Financa/conta/${movimentacao.conta}/`, {
-                    headers: {
-                      Authorization: `Token ${token}`
-                    }
-                  });
-                  // Retornar um objeto com o nome da conta e outros dados da movimentação
-                  return {
-                    ...movimentacao,
-                    nomeConta: responseConta.data.nome
-                  };
-                })
-              );
-              setMovimentacoes(movimentacoesComNomeConta);
-            } catch (error) {
-              console.error('Error fetching movimentacoes:', error);
-            }
-          };
-
-    const fetchCategorias = async () => {
-      try {
-        const responseCategorias = await axios.get('http://172.16.4.17:8000/api/Financa/categoria/', {
-          headers: {
-            Authorization: `Token ${token}`
-          }
-        });
-        setCategorias(responseCategorias.data);
-      } catch (error) {
-        console.error('Error fetching categorias:', error);
+        setError('Failed to validate token');
       }
     };
 
     validateToken();
-    fetchMovimentacoes();
-    fetchCategorias();
   }, [token, setValidationResult]);
 
+  useEffect(() => {
+    if (validationResultLocal && validationResultLocal.id) {
+      const fetchMovimentacoes = async () => {
+        try {
+          setLoading(true);
+          const response = await axios.get(`http://172.16.4.17:8000/api/Financa/GetFinancas/${validationResultLocal.id}/`, {
+            headers: {
+              Authorization: `Token ${token}`
+            }
+          });
+
+          const movimentacoesComNomeConta = await Promise.all(
+            response.data.movimentacoes.map(async (movimentacao) => {
+              const responseConta = await axios.get(`http://172.16.4.17:8000/api/Financa/conta/${movimentacao.conta}/`, {
+                headers: {
+                  Authorization: `Token ${token}`
+                }
+              });
+
+              return {
+                ...movimentacao,
+                nomeConta: responseConta.data.nome
+              };
+            })
+          );
+          setMovimentacoes(movimentacoesComNomeConta);
+        } catch (error) {
+          console.error('Error fetching movimentacoes:', error);
+          setError('Error fetching movimentacoes');
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      const fetchCategorias = async () => {
+        try {
+          const responseCategorias = await axios.get('http://172.16.4.17:8000/api/Financa/categoria/', {
+            headers: {
+              Authorization: `Token ${token}`
+            }
+          });
+          setCategorias(responseCategorias.data);
+        } catch (error) {
+          console.error('Error fetching categorias:', error);
+          setError('Error fetching categorias');
+        }
+      };
+
+      fetchMovimentacoes();
+      fetchCategorias();
+    }
+  }, [validationResultLocal, token]);
+
   const getCorPorTipo = (tipo) => {
-    // Definir cores para cada tipo de categoria
     switch (tipo) {
       case 'receita':
-        return '#32CD32'; // Verde claro para receitas
+        return '#32CD32';
       case 'despesa':
-        return '#FF6347'; // Vermelho claro para despesas
+        return '#FF6347';
       case 'transferencia':
-        return '#FFD700'; // Amarelo para transferências
+        return '#FFD700';
       default:
-        return '#808080'; // Cinza para outros tipos (pode ser ajustado conforme necessário)
+        return '#808080';
     }
   };
 
@@ -95,10 +104,24 @@ export default function Home({ route }) {
     return null;
   };
 
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <Text style={{ color: 'red' }}>{error}</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-
-
       <Text style={styles.movimentacoesTitle}>Movimentações:</Text>
       <FlatList
         data={movimentacoes}

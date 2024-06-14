@@ -37,7 +37,7 @@ export default function SignIn({ navigation }) {
       // setError(null);
       console.log('Login bem-sucedido', JSON.stringify(data));
     } catch (error) {
-      setError("dgrdrg"+error.message);
+      setError(error.message);
     }
   };
 

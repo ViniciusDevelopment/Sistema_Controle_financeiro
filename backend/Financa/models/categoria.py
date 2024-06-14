@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 class Categoria(models.Model):
     TIPO_CHOICES = [
@@ -6,7 +7,7 @@ class Categoria(models.Model):
         ('despesa', 'Despesa'),
         ('transferencia', 'Transferência'),
     ]
-    #user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     nome = models.CharField(max_length=255)
     tipo = models.CharField(max_length=20, choices=TIPO_CHOICES)
     criado_em = models.DateTimeField(auto_now_add=True)

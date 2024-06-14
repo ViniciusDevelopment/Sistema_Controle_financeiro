@@ -21,7 +21,7 @@ export default function Categoria({ route }) {
 
       const response = await axios.post(
         'http://172.16.4.17:8000/api/Financa/categoria/',
-        { tipo: tipo, nome: nome },
+        { user: validationResult.id, tipo: tipo, nome: nome },
         config
       );
 
