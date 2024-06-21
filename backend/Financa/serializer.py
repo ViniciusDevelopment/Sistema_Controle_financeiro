@@ -12,7 +12,9 @@ class CategoriaSerializer(serializers.ModelSerializer):
 class ContaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Conta
-        fields = "__all__"
+        fields = ['id', 'nome', 'criado_em', 'atualizado_em', 'user', 'saldo']
+    def get_saldo(self, obj):
+        return obj.saldo()
 
 class MovimentacaoSerializer(serializers.ModelSerializer):
     class Meta:

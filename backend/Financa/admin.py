@@ -31,6 +31,7 @@ class MovimentacaoAdmin(admin.ModelAdmin):
         "conta",
         "valor",
         "movimentado_em",
+        "get_categoria_tipo",
     )
 
     list_filter = (
@@ -38,3 +39,7 @@ class MovimentacaoAdmin(admin.ModelAdmin):
         "categoria",
         "movimentado_em",
     )
+    def get_categoria_tipo(self, obj):
+        return obj.categoria.tipo 
+
+    get_categoria_tipo.short_description = 'Tipo da Categoria'

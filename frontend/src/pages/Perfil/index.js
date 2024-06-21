@@ -1,22 +1,18 @@
 import React from 'react';
 import { View, Text, Button, StyleSheet } from 'react-native';
 
-const ProfileScreen = ({ navigation }) => {
+const ProfileScreen = ({ navigation, route }) => {
+  const { token, validationResult } = route.params;
+
   const goToEditProfile = () => {
-    // Implementar a navegação para a tela de edição de perfil
-    // Exemplo: navigation.navigate('EditProfile');
     alert('Navegar para a tela de Edição de Perfil');
   };
 
   const goToAccounts = () => {
-    // Implementar a navegação para a tela de contas
-    // Exemplo: navigation.navigate('Accounts');
-    alert('Navegar para a tela de Contas');
+    navigation.navigate('Contas', { token, validationResult });
   };
 
   const goToCategories = () => {
-    // Implementar a navegação para a tela de categorias
-    // Exemplo: navigation.navigate('Categories');
     alert('Navegar para a tela de Categorias');
   };
 
