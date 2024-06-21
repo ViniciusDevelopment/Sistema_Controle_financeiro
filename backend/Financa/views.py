@@ -10,6 +10,7 @@ from django.views.generic import TemplateView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from rest_framework.views import APIView
 from django.contrib.auth.models import Group, Permission, User
+from rest_framework import status
 
 class CategoriaViewSet(viewsets.ModelViewSet):
     permission_classes = [
@@ -78,6 +79,16 @@ class UserDetailView(APIView):
         }
 
         return Response(response_data, status=200)
+
+class GetCategoriaTipo(APIView):
+    def get(self, request, user_id, tipo):
+        try:
+            categorias = Categoria.objects.filter(user_id=user_id, tipo=tipo)
+            serializer = CategoriaSerializer(categorias, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Categoria.DoesNotExist:
+            return Response({'error': 'Categorias não encontradas'}, status=status.HTTP_404_NOT_FOUND)
+
 
 
     

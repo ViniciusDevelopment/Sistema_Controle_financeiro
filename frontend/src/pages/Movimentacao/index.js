@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import axios from 'axios';
-import { Picker } from '@react-native-picker/picker'; // Importe Picker corretamente
+import { Picker } from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 export default function Movimentacao({ route }) {
-  const { token, validationResult } = route.params;
+  const { token, setValidationResult } = route.params;
+  const [validationResultLocal, setValidationResultLocal] = useState(null);
   const [contas, setContas] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [contaSelecionada, setContaSelecionada] = useState('');
@@ -14,9 +15,26 @@ export default function Movimentacao({ route }) {
   const [descricao, setDescricao] = useState('');
   const [dataMovimentacao, setDataMovimentacao] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [tipoMovimentacao, setTipoMovimentacao] = useState('receita');
 
   useEffect(() => {
-    // Função para carregar contas do servidor
+    const validateToken = async () => {
+      try {
+        console.log("token: " + token)
+        const response = await axios.post('http://172.16.4.17:8000/api/Autenticacao/tokenvalidation', { token });
+        setValidationResultLocal(response.data);
+      } catch (error) {
+        console.error('Error validating token:', error);
+        setValidationResultLocal({ error: 'Failed to validate token' });
+      }
+    };
+
+    validateToken();
+  }, [token, setValidationResultLocal]);
+
+  useEffect(() => {
+    console.log("!!!!!!!!!!!!")
+    console.log(validationResultLocal)
     const fetchContas = async () => {
       try {
         const response = await axios.get('http://172.16.4.17:8000/api/Financa/conta/', {
@@ -30,15 +48,18 @@ export default function Movimentacao({ route }) {
       }
     };
 
-    // Função para carregar categorias do servidor
     const fetchCategorias = async () => {
       try {
-        const response = await axios.get('http://172.16.4.17:8000/api/Financa/categoria/', {
-          headers: {
-            Authorization: `Token ${token}`
-          }
-        });
-        setCategorias(response.data);
+        if (validationResultLocal) {
+          console.log("!!!!!!!!!!!!")
+          console.log(validationResultLocal)
+          const response = await axios.get(`http://172.16.4.17:8000/api/Financa/GetCategoriaTipo/${validationResultLocal.id}/${tipoMovimentacao}/`, {
+            headers: {
+              Authorization: `Token ${token}`
+            }
+          });
+          setCategorias(response.data);
+        }
       } catch (error) {
         console.error('Erro ao carregar categorias:', error);
       }
@@ -46,7 +67,7 @@ export default function Movimentacao({ route }) {
 
     fetchContas();
     fetchCategorias();
-  }, []);
+  }, [tipoMovimentacao, token, validationResultLocal]); // Adicionando token e validationResultLocal como dependências
 
   const cadastrarMovimentacao = async () => {
     try {
@@ -56,28 +77,19 @@ export default function Movimentacao({ route }) {
         }
       };
 
-      console.log({
-        conta: contaSelecionada,
-        categoria: Number(categoriaSelecionada),
-        valor: Number(valor),
-        descricao: descricao,
-        movimentado_em: dataMovimentacao.toISOString() 
-      });
-
       const response = await axios.post(
         'http://172.16.4.17:8000/api/Financa/movimentacao/',
         {
           conta: contaSelecionada,
-          categoria: Number(categoriaSelecionada), // Converter para número
+          categoria: Number(categoriaSelecionada),
           valor: Number(valor),
           descricao: descricao,
-          movimentado_em: dataMovimentacao.toISOString() // Converter para formato ISO
+          movimentado_em: dataMovimentacao.toISOString()
         },
         config
       );
 
       Alert.alert('Sucesso', 'Movimentação cadastrada com sucesso!');
-      // Limpar campos após o cadastro
       setContaSelecionada('');
       setCategoriaSelecionada('');
       setValor('');
@@ -89,8 +101,33 @@ export default function Movimentacao({ route }) {
     }
   };
 
+  const handleTipoMovimentacao = (tipo) => {
+    setTipoMovimentacao(tipo);
+  };
+
   return (
     <View style={styles.container}>
+      <View style={styles.opcoesContainer}>
+        <TouchableOpacity
+          style={[styles.opcaoButton, tipoMovimentacao === 'receita' ? styles.opcaoButtonSelected : null]}
+          onPress={() => handleTipoMovimentacao('receita')}
+        >
+          <Text style={[styles.opcaoText, tipoMovimentacao === 'receita' ? styles.opcaoTextSelected : null]}>Receita</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.opcaoButton, tipoMovimentacao === 'despesa' ? styles.opcaoButtonSelected : null]}
+          onPress={() => handleTipoMovimentacao('despesa')}
+        >
+          <Text style={[styles.opcaoText, tipoMovimentacao === 'despesa' ? styles.opcaoTextSelected : null]}>Despesa</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.opcaoButton, tipoMovimentacao === 'transferencia' ? styles.opcaoButtonSelected : null]}
+          onPress={() => handleTipoMovimentacao('transferencia')}
+        >
+          <Text style={[styles.opcaoText, tipoMovimentacao === 'transferencia' ? styles.opcaoTextSelected : null]}>Transferência</Text>
+        </TouchableOpacity>
+      </View>
+
       <Text style={styles.label}>Conta:</Text>
       <Picker
         selectedValue={contaSelecionada}
@@ -154,23 +191,48 @@ export default function Movimentacao({ route }) {
       <Button title="Cadastrar Movimentação" onPress={cadastrarMovimentacao} />
     </View>
   );
-};
+}
+
 
 const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      padding: 16,
-      backgroundColor: '#fff',
-    },
-    label: {
-      fontSize: 18,
-      marginBottom: 8,
-    },
-    input: {
-      height: 40,
-      borderColor: '#ccc',
-      borderWidth: 1,
-      marginBottom: 16,
-      paddingHorizontal: 8,
-    },
-  });
+  container: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: '#fff',
+  },
+  opcoesContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  opcaoButton: {
+    flex: 1,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 8,
+    marginHorizontal: 4,
+    backgroundColor: '#fff',
+  },
+  opcaoButtonSelected: {
+    backgroundColor: '#007AFF',
+  },
+  opcaoText: {
+    color: '#007AFF',
+    fontWeight: 'bold',
+  },
+  opcaoTextSelected: {
+    color: '#fff',
+  },
+  label: {
+    fontSize: 18,
+    marginBottom: 8,
+  },
+  input: {
+    height: 40,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    marginBottom: 16,
+    paddingHorizontal: 8,
+  },
+});
