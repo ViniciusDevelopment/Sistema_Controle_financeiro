@@ -12,11 +12,16 @@ class ContaAdmin(admin.ModelAdmin):
         "id",
         "user",
         "nome",
+        "exibir_saldo"
     )
 
     list_filter = (
         "user",
     )
+    def exibir_saldo(self, obj):
+        return obj.saldo()  # Chama o método saldo() para obter o saldo final
+
+    exibir_saldo.short_description = 'Saldo Final'
 
 
 @admin.register(Movimentacao)

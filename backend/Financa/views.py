@@ -11,6 +11,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from rest_framework.views import APIView
 from django.contrib.auth.models import Group, Permission, User
 from rest_framework import status
+from django.core.exceptions import ValidationError
 
 class CategoriaViewSet(viewsets.ModelViewSet):
     permission_classes = [
@@ -89,6 +90,19 @@ class GetCategoriaTipo(APIView):
         except Categoria.DoesNotExist:
             return Response({'error': 'Categorias não encontradas'}, status=status.HTTP_404_NOT_FOUND)
 
-
+class CadastrarMovimentacao(APIView):
+     def post(self, request, *args, **kwargs):
+        serializer = MovimentacaoSerializer(data=request.data)
+        if serializer.is_valid():
+            try:
+                serializer.save()
+                return Response('Movimentação cadastrada com sucesso!')
+            except ValidationError as e:
+                # Trata erros de validação customizados
+                return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
+            except Exception as e:
+                # Trata outros erros inesperados
+                return Response(str(e), status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     

@@ -16,11 +16,12 @@ export default function Movimentacao({ route }) {
   const [dataMovimentacao, setDataMovimentacao] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [tipoMovimentacao, setTipoMovimentacao] = useState('receita');
+  const [contaDestino, setContaDestino] = useState('');
+  const [showContaDestino, setShowContaDestino] = useState(false); // Estado para controlar a visibilidade do campo de conta destino
 
   useEffect(() => {
     const validateToken = async () => {
       try {
-        console.log("token: " + token)
         const response = await axios.post('http://172.16.4.17:8000/api/Autenticacao/tokenvalidation', { token });
         setValidationResultLocal(response.data);
       } catch (error) {
@@ -33,8 +34,6 @@ export default function Movimentacao({ route }) {
   }, [token, setValidationResultLocal]);
 
   useEffect(() => {
-    console.log("!!!!!!!!!!!!")
-    console.log(validationResultLocal)
     const fetchContas = async () => {
       try {
         const response = await axios.get('http://172.16.4.17:8000/api/Financa/conta/', {
@@ -51,8 +50,6 @@ export default function Movimentacao({ route }) {
     const fetchCategorias = async () => {
       try {
         if (validationResultLocal) {
-          console.log("!!!!!!!!!!!!")
-          console.log(validationResultLocal)
           const response = await axios.get(`http://172.16.4.17:8000/api/Financa/GetCategoriaTipo/${validationResultLocal.id}/${tipoMovimentacao}/`, {
             headers: {
               Authorization: `Token ${token}`
@@ -67,42 +64,67 @@ export default function Movimentacao({ route }) {
 
     fetchContas();
     fetchCategorias();
-  }, [tipoMovimentacao, token, validationResultLocal]); // Adicionando token e validationResultLocal como dependências
+  }, [tipoMovimentacao, token, validationResultLocal]);
 
   const cadastrarMovimentacao = async () => {
-    try {
-      const config = {
-        headers: {
-          Authorization: `Token ${token}`
-        }
+    const url = 'http://172.16.4.17:8000/api/Financa/CadastrarMovimentacao';
+  
+    let movimentacaoData = {
+      conta: contaSelecionada,
+      categoria: Number(categoriaSelecionada),
+      valor: Number(valor),
+      descricao: descricao,
+      movimentado_em: dataMovimentacao.toISOString()
+    };
+  
+    if (tipoMovimentacao === 'transferencia') {
+      movimentacaoData = {
+        ...movimentacaoData,
+        conta_destino: contaDestino // Adicionando conta de destino apenas para transferências
       };
-
-      const response = await axios.post(
-        'http://172.16.4.17:8000/api/Financa/movimentacao/',
-        {
-          conta: contaSelecionada,
-          categoria: Number(categoriaSelecionada),
-          valor: Number(valor),
-          descricao: descricao,
-          movimentado_em: dataMovimentacao.toISOString()
+    }
+  
+    try {
+      console.log(`Token ${token}`)
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Token ${token}`
         },
-        config
-      );
-
-      Alert.alert('Sucesso', 'Movimentação cadastrada com sucesso!');
+        body: JSON.stringify(movimentacaoData)
+      });
+  
+      const responseData = await response.json();
+      const cleanedResponse = responseData.replace(/[,.\[\]{}'""\""]/g, '');
+  
+      // Exibe o conteúdo da resposta no alert
+      alert(JSON.stringify(cleanedResponse));
+  
+      // Exibe um alerta de sucesso
+      Alert.alert(cleanedResponse);
+  
+      // Limpa os campos do formulário
       setContaSelecionada('');
       setCategoriaSelecionada('');
       setValor('');
       setDescricao('');
       setDataMovimentacao(new Date());
+      setContaDestino('');
     } catch (error) {
+      // Trata erros caso ocorram durante a requisição
       console.error('Erro ao cadastrar movimentação:', error);
-      Alert.alert('Erro', 'Falha ao cadastrar movimentação');
+      Alert.alert('Erro', 'Não foi possível cadastrar a movimentação. Por favor, tente novamente mais tarde.');
     }
   };
+  
+  
+  
 
   const handleTipoMovimentacao = (tipo) => {
     setTipoMovimentacao(tipo);
+    // Exibir o campo de conta destino apenas quando for uma transferência
+    setShowContaDestino(tipo === 'transferencia');
   };
 
   return (
@@ -138,6 +160,21 @@ export default function Movimentacao({ route }) {
           <Picker.Item key={conta.id} label={conta.nome} value={conta.id} />
         ))}
       </Picker>
+
+      {showContaDestino && (
+        <>
+          <Text style={styles.label}>Conta Destino:</Text>
+          <Picker
+            selectedValue={contaDestino}
+            onValueChange={(itemValue, itemIndex) => setContaDestino(itemValue)}
+          >
+            <Picker.Item label="Selecione uma conta de destino" value="" />
+            {contas.map(conta => (
+              <Picker.Item key={conta.id} label={conta.nome} value={conta.id} />
+            ))}
+          </Picker>
+        </>
+      )}
 
       <Text style={styles.label}>Categoria:</Text>
       <Picker
@@ -192,7 +229,6 @@ export default function Movimentacao({ route }) {
     </View>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {
