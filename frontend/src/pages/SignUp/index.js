@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, Button, StyleSheet, Alert, Platform} from 'react-native';
 
 export default function SignUp({ navigation }) {
   const [username, setUsername] = useState('');
@@ -9,7 +9,13 @@ export default function SignUp({ navigation }) {
 
   const handleSignUp = () => {
     if (password !== confirmPassword) {
+      if (Platform.OS === 'web') {
+        
+        alert('A senha e a confirmação de senha não correspondem.');
+    } else {
       Alert.alert('Erro', 'A senha e a confirmação de senha não correspondem.');
+    }
+      
       return;
     }
 
@@ -28,8 +34,33 @@ export default function SignUp({ navigation }) {
     .then(response => response.json())
     .then(data => {
       console.log('Response:', data);
-      // Aqui você pode tratar a resposta da requisição, por exemplo, exibindo uma mensagem de sucesso
-      Alert.alert('Sucesso', 'Usuário criado com sucesso.');
+      let errorMessage = '';
+
+  // Itera sobre as chaves do objeto data
+  Object.keys(data).forEach(key => {
+    // Verifica se há mensagens de erro para a chave atual
+    if (data[key].length > 0) {
+      // Adiciona a mensagem de erro formatada para a chave atual
+      errorMessage += `${key}: ${data[key][0]}\n`;
+    }
+  });
+
+      if (Platform.OS === 'web') {
+        if(data && data.message){
+          alert('Usuário criado com sucesso!');
+        }
+        else{
+          alert(`${errorMessage}`);
+        }
+    } else {
+      if(data && data.message){
+        Alert.alert('Usuário criado com sucesso!');
+      }
+      else{
+        Alert.alert('Usuario', errorMessage);
+      }
+    }
+      
     })
     .catch(error => {
       console.error('Error:', error);
