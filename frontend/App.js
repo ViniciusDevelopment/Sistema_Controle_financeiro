@@ -13,6 +13,7 @@ import Contas from './src/pages/Contas';
 import Categoria from './src/pages/Categoria';
 import Movimentacao from './src/pages/Movimentacao';
 import Perfil from './src/pages/Perfil';
+import DetalharMovimentacoes from './src/pages/DetalharMovimentacoes';
 
 const Tab = createBottomTabNavigator();
 
@@ -77,6 +78,7 @@ function Routes() {
       <Stack.Screen name="Home" component={MainTabs} />
       <Stack.Screen name="Contas" component={Contas} />
       <Stack.Screen name="Categoria" component={Categoria} />
+      <Stack.Screen name="DetalharMovimentacoes" component={DetalharMovimentacoes} />
     </Stack.Navigator>
   );
 }
