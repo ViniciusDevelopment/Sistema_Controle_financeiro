@@ -43,6 +43,16 @@ export default function Categoria({ route, navigation }) {
     setNovoNomeCategoria('');
   };
 
+  const abrirModalDelete = (categoria) => {
+    setCategoriaEditando(categoria);
+    setModalVisible3(true);
+  };
+
+  const fecharModalDelete = () => {
+    setModalVisible3(false);
+    setCategoriaEditando(null);
+  };
+
 
   useEffect(() => {
     const validateToken = async () => {
@@ -123,6 +133,34 @@ export default function Categoria({ route, navigation }) {
       });
   };
 
+
+  const handleDeletarCategoria = async () => {
+
+    const url = `http://172.16.4.17:8000/api/Financa/categoria/${categoriaEditando.id}/`;
+
+    // Aqui você faria a requisição PUT usando fetch ou axios
+    fetch(url, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Token ${token}`,
+      },
+    })
+      .then(response => {
+        if (response.ok) {
+          // Aqui você pode adicionar lógica adicional após a atualização bem-sucedida
+          console.log('Categoria deletada com sucesso!');
+          fetchCategorias();
+          fecharModalDelete();
+        } else {
+          console.error('Falha ao deletar categoria:', response.status);
+          alert('Falha ao deletar categoria:', response.status)
+        }
+      })
+      .catch(error => {
+        console.error('Erro ao deletar categoria:', error);
+      });
+  };
 
   useEffect(() => {
     const fetchCategorias = async () => {
@@ -226,7 +264,7 @@ export default function Categoria({ route, navigation }) {
             style={{ marginLeft: 10 }}
             onPress={() => {
               console.log('Editar item:', item.id);
-              // abrirModalDelete(item);
+              abrirModalDelete(item);
             }}
           />
         </View>
@@ -268,6 +306,30 @@ export default function Categoria({ route, navigation }) {
           </View>
         </View>
       </Modal>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible3}
+        onRequestClose={fecharModalDelete}
+      >
+        <View style={styles.modalcategoriainer}>
+          <View style={styles.modalContent}>
+            <Text>Deletar Categoria</Text>
+            <Text>Tem certeza que deseja deletar a categoria {categoriaEditando?.nome}?</Text>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity onPress={fecharModalDelete} style={[styles.button, { backgroundColor: 'red' }]}>
+                <Text style={styles.buttonText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleDeletarCategoria} style={[styles.button, { backgroundColor: 'green' }]}>
+                <Text style={styles.buttonText}>Deletar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      
 
 <TouchableOpacity
         style={styles.addButton}
