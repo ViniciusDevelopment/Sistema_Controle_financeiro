@@ -3,8 +3,6 @@ import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity }
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 
-
-
 export default function Home({ route }) {
   const { token, setValidationResult } = route.params;
   const [validationResultLocal, setValidationResultLocal] = useState(null);
@@ -15,7 +13,7 @@ export default function Home({ route }) {
   const navigation = useNavigation();
 
   const handlePressMovimentacao = (movimentacao) => {
-    navigation.navigate('DetalharMovimentacoes', {movimentacao, token });
+    navigation.navigate('DetalharMovimentacoes', { movimentacao, token });
   };
 
   useEffect(() => {
@@ -45,22 +43,38 @@ export default function Home({ route }) {
               Authorization: `Token ${token}`
             }
           });
-
-          const movimentacoesComNomeConta = await Promise.all(
+  
+          const movimentacoesComDetalhes = await Promise.all(
             response.data.movimentacoes.map(async (movimentacao) => {
               const responseConta = await axios.get(`http://172.16.4.17:8000/api/Financa/conta/${movimentacao.conta}/`, {
                 headers: {
                   Authorization: `Token ${token}`
                 }
               });
-
-              return {
+  
+              const detalhesMovimentacao = {
                 ...movimentacao,
                 nomeConta: responseConta.data.nome
               };
+  
+              if (movimentacao.conta_destino != null) {
+                console.log(movimentacao)
+                const responseContaDestino = await axios.get(`http://172.16.4.17:8000/api/Financa/conta/${movimentacao.conta_destino}/`, {
+                  headers: {
+                    Authorization: `Token ${token}`
+                  }
+                });
+
+                console.log(responseContaDestino)
+  
+                detalhesMovimentacao.nomeContaDestino = responseContaDestino.data.nome;
+              }
+  
+              return detalhesMovimentacao;
             })
           );
-          setMovimentacoes(movimentacoesComNomeConta);
+  
+          setMovimentacoes(movimentacoesComDetalhes);
         } catch (error) {
           console.error('Error fetching movimentacoes:', error);
           setError('Error fetching movimentacoes');
@@ -68,7 +82,7 @@ export default function Home({ route }) {
           setLoading(false);
         }
       };
-
+  
       const fetchCategorias = async () => {
         try {
           const responseCategorias = await axios.get('http://172.16.4.17:8000/api/Financa/categoria/', {
@@ -82,11 +96,12 @@ export default function Home({ route }) {
           setError('Error fetching categorias');
         }
       };
-
+  
       fetchMovimentacoes();
       fetchCategorias();
     }
   }, [validationResultLocal, token]);
+  
 
   const getCorPorTipo = (tipo) => {
     switch (tipo) {
@@ -101,14 +116,20 @@ export default function Home({ route }) {
     }
   };
 
-  const renderCategoria = (categoriaId) => {
+  const renderCategoria = (categoriaId, tipo) => {
     const categoria = categorias.find(cat => cat.id === categoriaId);
+
+    if (!tipo) {
+      return categoria.tipo;
+    }
+
     if (categoria) {
       const cor = getCorPorTipo(categoria.tipo);
       return (
         <Text style={{ color: cor }}>{categoria.tipo} - {categoria.nome}</Text>
       );
     }
+
     return null;
   };
 
@@ -137,11 +158,18 @@ export default function Home({ route }) {
         renderItem={({ item }) => (
           <TouchableOpacity onPress={() => handlePressMovimentacao(item)}>
             <View style={styles.movimentacaoItem}>
-              <Text>Conta: {item.nomeConta}</Text>
-              <Text>Categoria: {renderCategoria(item.categoria)}</Text>
+            <Text>Conta: {item.nomeConta}</Text>
+            {renderCategoria(item.categoria, false) === 'transferencia' && (
+            <Text>Conta Destino: {item.nomeContaDestino}</Text>
+            )}
+            
+              <Text>Categoria: {renderCategoria(item.categoria, true)}</Text>
               <Text>Valor: {item.valor}</Text>
               <Text>Descrição: {item.descricao}</Text>
               <Text>Data da Movimentação: {item.movimentado_em}</Text>
+             
+              {/* Preciso verificar se o retorno de  renderCategoria(item.categoria, false) é igual a transferencia*/}
+
             </View>
           </TouchableOpacity>
         )}
