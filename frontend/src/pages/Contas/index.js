@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import axios from "axios";
 import Icon from "react-native-vector-icons/FontAwesome";
+import FontAwesome5Icon from 'react-native-vector-icons/FontAwesome5';
 
 export default function Contas({ route, navigation }) {
   const { token, setValidationResult } = route.params;
@@ -19,6 +20,35 @@ export default function Contas({ route, navigation }) {
   const [nomeConta, setNomeConta] = useState("");
   const [contas, setContas] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
+  const [modalVisible2, setModalVisible2] = useState(false);
+  const [modalVisible3, setModalVisible3] = useState(false);
+  const [novoNomeConta, setNovoNomeConta] = useState('');
+  const [contaEditando, setContaEditando] = useState(null);
+
+
+  const abrirModalEdicao = (conta) => {
+    setContaEditando(conta);
+    setNovoNomeConta(conta.nome);
+    setModalVisible2(true);
+  };
+
+  const fecharModalEdicao = () => {
+    setModalVisible2(false);
+    setContaEditando(null);
+    setNovoNomeConta('');
+  };
+
+  const abrirModalDelete = (conta) => {
+    setContaEditando(conta);
+    setModalVisible3(true);
+  };
+
+  const fecharModalDelete = () => {
+    setModalVisible3(false);
+    setContaEditando(null);
+  };
+
+  
 
   useEffect(() => {
     const validateToken = async () => {
@@ -62,9 +92,6 @@ export default function Contas({ route, navigation }) {
     }
   };
 
-  if (validationResultLocal && validationResultLocal.id) {
-    fetchContas();
-  }
 
   useEffect(() => {
     const fetchContas = async () => {
@@ -131,10 +158,77 @@ export default function Contas({ route, navigation }) {
       Alert.alert("Sucesso", "Conta cadastrada com sucesso!");
       setNomeConta("");
       setModalVisible(false);
+      fetchContas();
     } catch (error) {
       console.error("Erro ao cadastrar conta:", error);
       Alert.alert("Erro", "Falha ao cadastrar conta");
     }
+  };
+
+
+  const handleAtualizarConta = async () => {
+    // Aqui você deve fazer a requisição PUT para atualizar a conta
+    if (!contaEditando || novoNomeConta === '') {
+      return; // Verificação básica para garantir que tenha uma conta selecionada e um novo nome preenchido
+    }
+
+    const url = `http://172.16.4.17:8000/api/Financa/conta/${contaEditando.id}/`;
+
+    const requestBody = {
+      user: validationResultLocal.id, // Substitua com o ID do usuário correto
+      nome: novoNomeConta,
+    };
+
+    // Aqui você faria a requisição PUT usando fetch ou axios
+    fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Token ${token}`,
+      },
+      body: JSON.stringify(requestBody),
+    })
+      .then(response => {
+        if (response.ok) {
+          // Aqui você pode adicionar lógica adicional após a atualização bem-sucedida
+          console.log('Conta atualizada com sucesso!');
+          fetchContas();
+          fecharModalEdicao();
+        } else {
+          console.error('Falha ao atualizar conta:', response.status);
+        }
+      })
+      .catch(error => {
+        console.error('Erro ao atualizar conta:', error);
+      });
+  };
+
+  const handleDeletarConta = async () => {
+
+    const url = `http://172.16.4.17:8000/api/Financa/conta/${contaEditando.id}/`;
+
+    // Aqui você faria a requisição PUT usando fetch ou axios
+    fetch(url, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Token ${token}`,
+      },
+    })
+      .then(response => {
+        if (response.ok) {
+          // Aqui você pode adicionar lógica adicional após a atualização bem-sucedida
+          console.log('Conta deletada com sucesso!');
+          fetchContas();
+          fecharModalDelete();
+        } else {
+          console.error('Falha ao deletar conta:', response.status);
+          alert('Falha ao deletar conta:', response.status)
+        }
+      })
+      .catch(error => {
+        console.error('Erro ao deletar conta:', error);
+      });
   };
 
   return (
@@ -159,23 +253,98 @@ export default function Contas({ route, navigation }) {
       </View>
 
       <FlatList
-        data={contas}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <View style={styles.contaItem}>
-            <Text>{item.nome}</Text>
-            <Text
-              style={{
-                fontWeight: "bold",
-                color:
-                  item.saldo < 0 ? "red" : item.saldo > 0 ? "green" : "black",
-              }}
-            >
-              {formatarSaldo(item.saldo)}
-            </Text>
+      data={contas}
+      keyExtractor={(item) => item.id.toString()}
+      renderItem={({ item }) => (
+        <View style={styles.contaItem}>
+          <Text>{item.nome}</Text>
+          <Text
+            style={{
+              fontWeight: 'bold',
+              color: item.saldo < 0 ? 'red' : item.saldo > 0 ? 'green' : 'black',
+            }}
+          >
+            {formatarSaldo(item.saldo)}
+          </Text>
+          {/* Ícone de Edição */}
+          <FontAwesome5Icon
+            name="edit"
+            size={20}
+            color="blue"
+            style={{ marginLeft: 10 }}
+            onPress={() => {
+              console.log('Editar item:', item.id);
+              abrirModalEdicao(item);
+
+            }}
+          />
+          {/* Ícone de Exclusão */}
+          <FontAwesome5Icon
+            name="trash"
+            size={20}
+            color="red"
+            style={{ marginLeft: 10 }}
+            onPress={() => {
+              console.log('Editar item:', item.id);
+              abrirModalDelete(item);
+            }}
+          />
+        </View>
+      )}
+    />
+
+<Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible2}
+        onRequestClose={fecharModalEdicao}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text>Editar Conta</Text>
+            <TextInput
+              style={styles.input}
+              value={novoNomeConta}
+              onChangeText={setNovoNomeConta}
+              placeholder="Novo nome da conta"
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity onPress={fecharModalEdicao} style={[styles.button, { backgroundColor: 'red' }]}>
+                <Text style={styles.buttonText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleAtualizarConta} style={[styles.button, { backgroundColor: 'green' }]}>
+                <Text style={styles.buttonText}>Salvar</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        )}
-      />
+        </View>
+      </Modal>
+
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible3}
+        onRequestClose={fecharModalDelete}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text>Deletar Conta</Text>
+            <Text>Tem certeza que deseja deletar a conta {contaEditando?.nome}?</Text>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity onPress={fecharModalDelete} style={[styles.button, { backgroundColor: 'red' }]}>
+                <Text style={styles.buttonText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleDeletarConta} style={[styles.button, { backgroundColor: 'green' }]}>
+                <Text style={styles.buttonText}>Deletar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+
       <TouchableOpacity
         style={styles.addButton}
         onPress={() => setModalVisible(true)}
@@ -210,6 +379,7 @@ export default function Contas({ route, navigation }) {
       </Modal>
     </View>
   );
+
 }
 
 const styles = StyleSheet.create({
@@ -258,7 +428,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: "white",
   },
   modalView: {
     width: "80%",

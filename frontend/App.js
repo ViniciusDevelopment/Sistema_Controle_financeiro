@@ -76,6 +76,7 @@ function Routes() {
       <Stack.Screen name="SignUp" component={SignUp} />
       <Stack.Screen name="Home" component={MainTabs} />
       <Stack.Screen name="Contas" component={Contas} />
+      <Stack.Screen name="Categoria" component={Categoria} />
     </Stack.Navigator>
   );
 }

@@ -13,7 +13,7 @@ const ProfileScreen = ({ navigation, route }) => {
   };
 
   const goToCategories = () => {
-    alert('Navegar para a tela de Categorias');
+    navigation.navigate('Categoria', { token, validationResult });
   };
 
   return (
