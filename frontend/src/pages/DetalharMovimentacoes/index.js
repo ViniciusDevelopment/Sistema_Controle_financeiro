@@ -1,17 +1,27 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Button } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Platform } from 'react-native';
 import axios from 'axios';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { Picker } from '@react-native-picker/picker';
 
 export default function DetalharMovimentacoes({ route, navigation }) {
-  const { token, setValidationResult } = route.params;
-  const [validationResultLocal, setValidationResultLocal] = useState(null);
+  const { token } = route.params;
   const { movimentacao } = route.params;
+
+  const [validationResultLocal, setValidationResultLocal] = useState(null);
   const [categorias, setCategorias] = useState([]);
   const [modalVisibleDelete, setModalVisibleDelete] = useState(false);
   const [modalVisibleEdit, setModalVisibleEdit] = useState(false);
   const [novoNomeMovimentacao, setNovoNomeMovimentacao] = useState(movimentacao.descricao);
-  const [novoValorMovimentacao, setNovoValorMovimentacao] = useState(movimentacao.valor);
+  const [novoValorMovimentacao, setNovoValorMovimentacao] = useState(movimentacao.valor.toString());
+  const [novaDataMovimentacao, setNovaDataMovimentacao] = useState(new Date(movimentacao.movimentado_em));
+  const [novaContaOrigem, setNovaContaOrigem] = useState(movimentacao.conta);
+  const [novaContaDestino, setNovaContaDestino] = useState(movimentacao.conta_destino || '');
+  const [novaCategoria, setNovaCategoria] = useState(movimentacao.categoria.toString());
   const [error, setError] = useState(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [contas, setContas] = useState([]);
+  const [contaSelecionada, setContaSelecionada] = useState('');
 
   useEffect(() => {
     const validateToken = async () => {
@@ -29,6 +39,23 @@ export default function DetalharMovimentacoes({ route, navigation }) {
   }, [token]);
 
   useEffect(() => {
+    const fetchContas = async () => {
+        try {
+          const response = await axios.get('http://172.16.4.17:8000/api/Financa/conta/', {
+            headers: {
+              Authorization: `Token ${token}`
+            }
+          });
+          setContas(response.data);
+        } catch (error) {
+          console.error('Erro ao carregar contas:', error);
+        }
+      };
+
+      fetchContas();
+}, [validationResultLocal, token]);
+
+  useEffect(() => {
     if (validationResultLocal && validationResultLocal.id) {
       const fetchCategorias = async () => {
         try {
@@ -43,6 +70,7 @@ export default function DetalharMovimentacoes({ route, navigation }) {
           setError('Error fetching categorias');
         }
       };
+
       fetchCategorias();
     }
   }, [validationResultLocal, token]);
@@ -61,11 +89,11 @@ export default function DetalharMovimentacoes({ route, navigation }) {
   };
 
   const renderCategoria = (categoriaId) => {
-    const categoria = categorias.find(cat => cat.id === categoriaId);
+    const categoria = categorias.find(cat => cat.id === parseInt(categoriaId));
     if (categoria) {
       const cor = getCorPorTipo(categoria.tipo);
       return (
-        <Text style={{ color: cor }}>{categoria.tipo} - {categoria.nome}</Text>
+        <Text style={{ color: cor }}>{categoria.nome}</Text>
       );
     }
     return null;
@@ -87,11 +115,17 @@ export default function DetalharMovimentacoes({ route, navigation }) {
 
   const handleEditMovimentacao = async () => {
     try {
-      await axios.put(`http://172.16.4.17:8000/api/Financa/movimentacao/${movimentacao.id}/`, {
+      const updatedMovimentacao = {
         descricao: novoNomeMovimentacao,
-        valor: novoValorMovimentacao,
+        valor: parseFloat(novoValorMovimentacao),
+        movimentado_em: novaDataMovimentacao.toISOString(),
+        conta: parseInt(novaContaOrigem),
+        conta_destino: novaContaDestino ? parseInt(novaContaDestino) : null,
+        categoria: parseInt(novaCategoria),
         // Adicione outros campos que precisam ser atualizados
-      }, {
+      };
+
+      await axios.put(`http://172.16.4.17:8000/api/Financa/movimentacao/${movimentacao.id}/`, updatedMovimentacao, {
         headers: {
           Authorization: `Token ${token}`
         }
@@ -103,90 +137,157 @@ export default function DetalharMovimentacoes({ route, navigation }) {
     }
   };
 
+  const showDatePickerModal = () => {
+    setShowDatePicker(true);
+  };
+
+  const handleDateChange = (event, selectedDate) => {
+    const currentDate = selectedDate || novaDataMovimentacao;
+    setShowDatePicker(false);
+    setNovaDataMovimentacao(currentDate);
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Detalhes da Movimentação</Text>
       <Text style={styles.label}>Conta:</Text>
       <Text style={styles.value}>{movimentacao.nomeConta}</Text>
-      
+
+      {movimentacao.nomeContaDestino && (
+        <>
+          <Text style={styles.label}>Conta Destino:</Text>
+          <Text style={styles.value}>{movimentacao.nomeContaDestino}</Text>
+        </>
+      )}
+
       <Text style={styles.label}>Categoria:</Text>
       <Text style={styles.value}>{renderCategoria(movimentacao.categoria)}</Text>
-      
+
       <Text style={styles.label}>Valor:</Text>
       <Text style={styles.value}>{movimentacao.valor}</Text>
-      
+
       <Text style={styles.label}>Descrição:</Text>
       <Text style={styles.value}>{movimentacao.descricao}</Text>
-      
-      <Text style={styles.label}>Data da Movimentação:</Text>
-      <Text style={styles.value}>{movimentacao.movimentado_em}</Text>
 
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity style={[styles.button, styles.deleteButton]} onPress={() => setModalVisibleDelete(true)}>
-          <Text style={styles.buttonText}>Deletar</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.button, styles.editButton]} onPress={() => setModalVisibleEdit(true)}>
-          <Text style={styles.buttonText}>Alterar</Text>
-        </TouchableOpacity>
+      <TouchableOpacity style={[styles.button, styles.editButton]} onPress={() => setModalVisibleEdit(true)}>
+        <Text style={styles.buttonText}>Alterar</Text>
+      </TouchableOpacity>
+
+    {/* Modal de Edição */}
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={modalVisibleEdit}
+      onRequestClose={() => setModalVisibleEdit(false)}
+    >
+      <View style={styles.modalContainer}>
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>Alterar Movimentação</Text>
+
+          {/* Descrição da movimentação */}
+          <TextInput
+            style={styles.input}
+            value={novoNomeMovimentacao}
+            onChangeText={setNovoNomeMovimentacao}
+            placeholder="Descrição da movimentação"
+          />
+
+          {/* Valor da movimentação */}
+          <TextInput
+            style={styles.input}
+            value={novoValorMovimentacao}
+            onChangeText={setNovoValorMovimentacao}
+            placeholder="Valor da movimentação"
+            keyboardType="numeric"
+          />
+
+          {/* Data da movimentação */}
+          <TouchableOpacity onPress={showDatePickerModal} style={styles.datePickerButton}>
+            <Text style={styles.datePickerButtonText}>Selecionar Data</Text>
+          </TouchableOpacity>
+          {(showDatePicker && Platform.OS === 'ios') && (
+            <DateTimePicker
+              value={novaDataMovimentacao}
+              mode="date"
+              display="spinner"
+              onChange={handleDateChange}
+            />
+          )}
+
+          {/* Conta de Origem */}
+          <Text style={styles.label}>Conta de Origem:</Text>
+          <Picker
+            selectedValue={novaContaOrigem}
+            onValueChange={(itemValue, itemIndex) => setNovaContaOrigem(itemValue)}
+          >
+            {contas.map(conta => (
+              <Picker.Item key={conta.id} label={conta.nome} value={conta.id} />
+            ))}
+          </Picker>
+
+          {/* Conta Destino */}
+          {/* {movimentacao.tipo === 'transferencia' && (
+            <>
+              <Text style={styles.label}>Conta Destino:</Text>
+              <Picker
+                selectedValue={novaContaDestino}
+                onValueChange={(itemValue, itemIndex) => setNovaContaDestino(itemValue)}
+                style={styles.picker}
+              >
+                {contas.map(conta => (
+                  <Picker.Item key={conta.id} label={conta.nome} value={conta.id} />
+                ))}
+              </Picker>
+            </>
+          )} */}
+
+
+
+
+
+          {/* Conta Destino */}
+          {movimentacao.tipo === 'transferencia' && (
+            <>
+              <Text style={styles.label}>Conta Destino:</Text>
+              <Picker
+                selectedValue={novaContaDestino}
+                onValueChange={(itemValue, itemIndex) => setNovaContaDestino(itemValue)}
+                style={styles.picker}
+              >
+                {movimentacao.nomeContaDestino && (
+                  <Picker.Item label={movimentacao.nomeContaDestino} value={movimentacao.conta_destino} />
+                )}
+                {/* Renderizar outras contas destino disponíveis */}
+              </Picker>
+            </>
+          )}
+
+          {/* Categoria */}
+          <Text style={styles.label}>Categoria:</Text>
+          <Picker
+            selectedValue={novaCategoria}
+            onValueChange={(itemValue, itemIndex) => setNovaCategoria(itemValue)}
+            style={styles.picker}
+          >
+            {categorias.map(cat => (
+              <Picker.Item key={cat.id} label={cat.nome} value={cat.id.toString()} />
+            ))}
+          </Picker>
+
+          <View style={styles.modalButtons}>
+            <TouchableOpacity onPress={() => setModalVisibleEdit(false)} style={[styles.button, styles.cancelButton]}>
+              <Text style={styles.buttonText}>Cancelar</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleEditMovimentacao} style={[styles.button, styles.saveButton]}>
+              <Text style={styles.buttonText}>Salvar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
+    </Modal>
 
-      {/* Modal de Deleção */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisibleDelete}
-        onRequestClose={() => setModalVisibleDelete(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text>Deletar Movimentação</Text>
-            <Text>Tem certeza que deseja deletar esta movimentação?</Text>
-            <View style={styles.modalButtons}>
-              <TouchableOpacity onPress={() => setModalVisibleDelete(false)} style={[styles.button, { backgroundColor: 'red' }]}>
-                <Text style={styles.buttonText}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={handleDeleteMovimentacao} style={[styles.button, { backgroundColor: 'green' }]}>
-                <Text style={styles.buttonText}>Deletar</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
 
-      {/* Modal de Edição */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisibleEdit}
-        onRequestClose={() => setModalVisibleEdit(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text>Alterar Movimentação</Text>
-            <TextInput
-              style={styles.input}
-              value={novoNomeMovimentacao}
-              onChangeText={setNovoNomeMovimentacao}
-              placeholder="Descrição da movimentação"
-            />
-            <TextInput
-              style={styles.input}
-              value={novoValorMovimentacao}
-              onChangeText={setNovoValorMovimentacao}
-              placeholder="Valor da movimentação"
-              keyboardType="numeric"
-            />
-            <View style={styles.modalButtons}>
-              <TouchableOpacity onPress={() => setModalVisibleEdit(false)} style={[styles.button, { backgroundColor: 'red' }]}>
-                <Text style={styles.buttonText}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={handleEditMovimentacao} style={[styles.button, { backgroundColor: 'green' }]}>
-                <Text style={styles.buttonText}>Salvar</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+
     </View>
   );
 }
