@@ -19,6 +19,63 @@ export default function Movimentacao({ route }) {
   const [contaDestino, setContaDestino] = useState('');
   const [showContaDestino, setShowContaDestino] = useState(false); // Estado para controlar a visibilidade do campo de conta destino
 
+
+  const [errors, setErrors] = useState({
+    nomeMovimentacao: false,
+    valorMovimentacao: false,
+    dataMovimentacao: false,
+    contaOrigem: false,
+    contaDestino: false,
+    categoria: false,
+  });
+
+  const validateFields = () => {
+    let formIsValid = true;
+    const newErrors = {
+      nomeMovimentacao: false,
+      valorMovimentacao: false,
+      dataMovimentacao: false,
+      contaOrigem: false,
+      contaDestino: false,
+      categoria: false,
+    };
+
+    if (!contaSelecionada.trim()) {
+      formIsValid = false;
+      newErrors.contaOrigem = true;
+    }
+
+    if (!categoriaSelecionada.trim()) {
+      formIsValid = false;
+      newErrors.categoria = true;
+    }
+
+    if (!valor) {
+      formIsValid = false;
+      newErrors.valorMovimentacao = true;
+    }
+
+    if (!descricao) {
+      formIsValid = false;
+      newErrors.nomeMovimentacao = true;
+    }
+    if (tipoMovimentacao == "transferencia") {
+      if (!contaDestino) {
+        formIsValid = false;
+        newErrors.contaDestino = true;
+      }
+    }
+
+    if (!dataMovimentacao) {
+      formIsValid = false;
+      newErrors.dataMovimentacao = true;
+    }
+
+    setErrors(newErrors);
+
+    return formIsValid;
+  };
+
   useEffect(() => {
     const validateToken = async () => {
       try {
@@ -67,6 +124,7 @@ export default function Movimentacao({ route }) {
   }, [tipoMovimentacao, token, validationResultLocal]);
 
   const cadastrarMovimentacao = async () => {
+    if (validateFields()) {
     const url = 'http://172.16.4.17:8000/api/Financa/CadastrarMovimentacao';
   
     let movimentacaoData = {
@@ -114,6 +172,7 @@ export default function Movimentacao({ route }) {
       console.error('Erro ao cadastrar movimentação:', error);
       Alert.alert('Erro', 'Não foi possível cadastrar a movimentação. Por favor, tente novamente mais tarde.');
     }
+  }
   };
   
   
@@ -187,15 +246,22 @@ export default function Movimentacao({ route }) {
 
       <Text style={styles.label}>Valor:</Text>
       <TextInput
-        style={styles.input}
+         style={[
+          styles.input,
+          errors.nomeMovimentacao && styles.errorInput,
+        ]}
         value={valor}
         onChangeText={setValor}
         placeholder="Digite o valor"
+        keyboardType="numeric"
       />
 
       <Text style={styles.label}>Descrição:</Text>
       <TextInput
-        style={styles.input}
+        style={[
+          styles.input,
+          errors.nomeMovimentacao && styles.errorInput,
+        ]}
         value={descricao}
         onChangeText={setDescricao}
         placeholder="Digite a descrição"
@@ -204,7 +270,10 @@ export default function Movimentacao({ route }) {
       <Text style={styles.label}>Data da Movimentação:</Text>
       <TouchableOpacity onPress={() => setShowDatePicker(true)}>
         <TextInput
-          style={styles.input}
+           style={[
+            styles.input,
+            errors.nomeMovimentacao && styles.errorInput,
+          ]}
           value={dataMovimentacao.toDateString()}
           editable={false}
         />
@@ -268,5 +337,22 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 16,
     paddingHorizontal: 8,
+  },
+
+  errorInput: {
+    borderColor: "red",
+    borderWidth: 2,
+  },
+
+  errorPicker: {
+    borderColor: "red",
+    borderWidth: 2,
+    borderRadius: 5,
+  },
+
+  errorText: {
+    color: "red",
+    fontSize: 12,
+    marginTop: 5,
   },
 });

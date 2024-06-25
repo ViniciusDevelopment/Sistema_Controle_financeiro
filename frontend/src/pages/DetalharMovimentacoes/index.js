@@ -99,23 +99,19 @@ export default function DetalharMovimentacoes({ route, navigation }) {
     }
   };
   
-
-  const fetchCategorias = async () => {
-    try {
-      const responseCategorias = await axios.get('http://172.16.4.17:8000/api/Financa/categoria/', {
-        headers: {
-          Authorization: `Token ${token}`
-        }
-      });
-      setCategorias(responseCategorias.data);
-    } catch (error) {
-      console.error('Error fetching categorias:', error);
-      setError('Error fetching categorias');
-    }
-  };
-
-
-
+  // const fetchCategorias = async () => {
+  //   try {
+  //     const responseCategorias = await axios.get('http://172.16.4.17:8000/api/Financa/categoria/', {
+  //       headers: {
+  //         Authorization: `Token ${token}`
+  //       }
+  //     });
+  //     setCategorias(responseCategorias.data);
+  //   } catch (error) {
+  //     console.error('Error fetching categorias:', error);
+  //     setError('Error fetching categorias');
+  //   }
+  // };
 
   const validateFields = () => {
     let formIsValid = true;
@@ -368,6 +364,7 @@ export default function DetalharMovimentacoes({ route, navigation }) {
       setNovaCategoria(""); // Reseta a categoria quando o tipo de movimentação muda
     } else {
       setTipoMovimentacao(tipo_recebido);
+      console.log(tipo_recebido)
       setShowContaDestino(tipo_recebido === "transferencia");
       setNovaCategoria(tipo);
     }
@@ -380,6 +377,12 @@ export default function DetalharMovimentacoes({ route, navigation }) {
       routes: [{ name: "Home", params: { token } }],
     });
   }, [navigation, token]);
+
+
+  const abrirModalEdicao = () => {
+    setModalVisibleEdit(true);
+    setShowContaDestino(tipoMovimentacao == "transferencia");
+  };
 
   return (
     <View style={styles.container}>
@@ -411,7 +414,7 @@ export default function DetalharMovimentacoes({ route, navigation }) {
       <View style={styles.container}>
         <TouchableOpacity
           style={[styles.button, styles.editButton]}
-          onPress={() => setModalVisibleEdit(true)}
+          onPress={() => abrirModalEdicao()}
         >
           <Text style={styles.buttonText}>Alterar</Text>
         </TouchableOpacity>
