@@ -32,6 +32,7 @@ function MainTabs({ route }) {
             <FontAwesome5 name="home" size={size} color={color} />
           ),
         }}
+        unmountOnBlur={true}
       />
       <Tab.Screen
         name="Gráfico"
