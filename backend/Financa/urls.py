@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.urls import include, path
-from .views import CadastrarMovimentacao, CategoriaViewSet, ContaViewSet, GetCategoriaTipo, MovimentacaoViewSet, UserDetailView
+from .views import AlterarMovimentacao, CadastrarMovimentacao, CategoriaViewSet, ContaViewSet, GetCategoriaTipo, MovimentacaoViewSet, UserDetailView
 from rest_framework import routers
 from django.conf import settings
 from django.conf.urls.static import static
@@ -19,6 +19,7 @@ urlpatterns = [
     path('/GetFinancas/<int:user_id>/', UserDetailView.as_view()),
     path('/GetCategoriaTipo/<int:user_id>/<str:tipo>/', GetCategoriaTipo.as_view(), name='get_categoria_tipo'),
     path('/CadastrarMovimentacao', CadastrarMovimentacao.as_view()),
+    path('/AlterarMovimentacao/<uuid:pk>/', AlterarMovimentacao.as_view()),
 ]
 
 if settings.DEBUG:

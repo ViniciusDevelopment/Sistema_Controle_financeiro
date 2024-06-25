@@ -1,4 +1,6 @@
 from typing import Any
+from uuid import UUID
+import uuid
 from django.shortcuts import render
 from rest_framework.response import Response
 from .models.conta import Conta
@@ -105,4 +107,23 @@ class CadastrarMovimentacao(APIView):
                 return Response(str(e), status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class AlterarMovimentacao(APIView):
+    def put(self, request, pk, *args, **kwargs):
+        try:
+            # Certifique-se de que o pk seja uma string antes de convertê-lo para UUID
+            movimentacao_uuid = uuid.UUID(str(pk))
+            movimentacao = Movimentacao.objects.get(id=movimentacao_uuid)
+        except (Movimentacao.DoesNotExist, ValueError, TypeError) as e:
+            return Response({'erro': 'Movimentação não encontrada.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = MovimentacaoSerializer(movimentacao, data=request.data)
+        if serializer.is_valid():
+            try:
+                serializer.save()
+                return Response('Movimentação alterada com sucesso!')
+            except ValidationError as e:
+                return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
+            except Exception as e:
+                return Response(str(e), status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     

@@ -100,9 +100,7 @@ export default function Movimentacao({ route }) {
   
       // Exibe o conteúdo da resposta no alert
       alert(JSON.stringify(cleanedResponse));
-  
-      // Exibe um alerta de sucesso
-      Alert.alert(cleanedResponse);
+      // Alert.alert(cleanedResponse);
   
       // Limpa os campos do formulário
       setContaSelecionada('');

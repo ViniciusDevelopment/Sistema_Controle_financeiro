@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect , useCallback} from "react";
 import {
   View,
   Text,
@@ -11,10 +11,12 @@ import {
 import axios from "axios";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
+import { useNavigation } from '@react-navigation/native';
 
 export default function DetalharMovimentacoes({ route, navigation }) {
   const { token } = route.params;
   const { movimentacao } = route.params;
+  const navigationroute = useNavigation();
   const [validationResultLocal, setValidationResultLocal] = useState(null);
   const [categorias, setCategorias] = useState([]);
   const [categorias2, setCategorias2] = useState([]);
@@ -27,13 +29,70 @@ export default function DetalharMovimentacoes({ route, navigation }) {
   const [novaContaOrigem, setNovaContaOrigem] = useState(movimentacao.conta);
   const [novaContaDestino, setNovaContaDestino] = useState(movimentacao.conta_destino || "");
   const [novaCategoria, setNovaCategoria] = useState(movimentacao.categoria.toString());
+
+  const [errors, setErrors] = useState({
+    nomeMovimentacao: false,
+    valorMovimentacao: false,
+    dataMovimentacao: false,
+    contaOrigem: false,
+    categoria: false,
+  });
   
-  const [error, setError] = useState(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [contas, setContas] = useState([]);
   const [contaSelecionada, setContaSelecionada] = useState("");
+  const [tipo, setTipo] = useState("");
   const [tipoMovimentacao, setTipoMovimentacao] = useState("receita");
   const [showContaDestino, setShowContaDestino] = useState(false);
+
+  const validateFields = () => {
+    let formIsValid = true;
+    const newErrors = {
+      nomeMovimentacao: false,
+      valorMovimentacao: false,
+      dataMovimentacao: false,
+      contaOrigem: false,
+      contaDestino: false,
+      categoria: false,
+    };
+  
+    if (!novoNomeMovimentacao.trim()) {
+      formIsValid = false;
+      newErrors.nomeMovimentacao = true;
+    }
+  
+    if (!novoValorMovimentacao.trim()) {
+      formIsValid = false;
+      newErrors.valorMovimentacao = true;
+    }
+  
+    if (!novaDataMovimentacao) {
+      formIsValid = false;
+      newErrors.dataMovimentacao = true;
+    }
+  
+    if (!novaContaOrigem) {
+      formIsValid = false;
+      newErrors.contaOrigem = true;
+    }
+    if(tipoMovimentacao == "transferencia"){
+      if(!novaContaDestino){
+        formIsValid = false;
+        newErrors.contaDestino = true;
+    }
+  }
+
+  
+    if (!novaCategoria) {
+      formIsValid = false;
+      newErrors.categoria = true;
+    }
+  
+    setErrors(newErrors);
+  
+    return formIsValid;
+  };
+  
 
   useEffect(() => {
     const validateToken = async () => {
@@ -161,6 +220,18 @@ export default function DetalharMovimentacoes({ route, navigation }) {
     }
   }, [movimentacao.categoria, categorias2]);
 
+  useEffect(() => {
+    if (movimentacao.categoria && categorias2.length > 0) {
+      const categoria = categorias2.find(
+        (cat) => cat.id === parseInt(movimentacao.categoria)
+      );
+      if (categoria) {
+        setTipo(categoria.tipo);
+      }
+    }
+  }, [movimentacao.categoria, categorias2]);
+
+
   const handleDeleteMovimentacao = async () => {
     try {
       await axios.delete(
@@ -180,40 +251,44 @@ export default function DetalharMovimentacoes({ route, navigation }) {
 
   const handleEditMovimentacao = async () => {
 
-      if (!movimentacaoEditando || novoNomeMovimentacao === '') {
-        return;
-      }
-  
-      const url = `http://172.16.4.17:8000/api/Financa/movimentacao/${movimentacao.id}/`;
+    if (validateFields()) {
+      const url = `http://172.16.4.17:8000/api/Financa/AlterarMovimentacao/${movimentacao.id}/`;
   
       const requestBody = {
-        user: validationResultLocal.id, // Substitua com o ID do usuário correto
-        nome: novoNomeCategoria,
-        tipo: novoTipoCategoria,
+        descricao: novoNomeMovimentacao,
+        valor: parseFloat(novoValorMovimentacao),
+        movimentado_em: novaDataMovimentacao.toISOString().split("T")[0], // Formata a data para o formato adequado
+        conta: novaContaOrigem,
+        conta_destino: novaContaDestino !== "" ? novaContaDestino : null,
+        categoria: parseInt(novaCategoria),
       };
+
+      if(tipoMovimentacao != "transferencia"){
+          requestBody.conta_destino = null;
+      }
+
+      console.log(requestBody);
   
       // Aqui você faria a requisição PUT usando fetch ou axios
-      fetch(url, {
+      const response = await fetch(url, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Token ${token}`,
+          Authorization: `Token ${token}`
         },
-        body: JSON.stringify(requestBody),
-      })
-        .then(response => {
-          if (response.ok) {
-            // Aqui você pode adicionar lógica adicional após a atualização bem-sucedida
-            console.log('movimentação atualizada com sucesso!');
-            fetchMovimentacao();
-            fecharModalEdicao();
-          } else {
-            console.error('Falha ao atualizar categoria:', response.status);
-          }
-        })
-        .catch(error => {
-          console.error('Erro ao atualizar categoria:', error);
-        });
+        body: JSON.stringify(requestBody)
+      });
+  
+      const responseData = await response.json();
+      const cleanedResponse = responseData.replace(/[,.\[\]{}'""\""]/g, '');
+
+      alert(JSON.stringify(cleanedResponse));
+      setModalVisibleEdit(false);
+    } else {
+      console.log("Por favor, preencha todos os campos obrigatórios!");
+    }
+  
+      
     };
   
 
@@ -227,10 +302,24 @@ export default function DetalharMovimentacoes({ route, navigation }) {
     setNovaDataMovimentacao(currentDate);
   };
 
-  const handleTipoMovimentacao = (tipo) => {
-    setTipoMovimentacao(tipo);
-    setShowContaDestino(tipo === "transferencia");
+  const handleTipoMovimentacao = (tipo_recebido) => {
+    if (tipo !== tipo_recebido) {
+      setTipoMovimentacao(tipo_recebido);
+      setShowContaDestino(tipo_recebido === "transferencia");
+      setNovaCategoria(""); // Reseta a categoria quando o tipo de movimentação muda
+    }
+    else{
+      setNovaCategoria(tipo)
+    }
   };
+
+  const onPressVoltar = useCallback(() => {
+    navigation.navigate('Home', { token });
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'Home', params: { token } }],
+    });
+  }, [navigation, token]);
 
   return (
     <View style={styles.container}>
@@ -262,6 +351,20 @@ export default function DetalharMovimentacoes({ route, navigation }) {
       >
         <Text style={styles.buttonText}>Alterar</Text>
       </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.button, styles.editButton]}
+        onPress={() => setModalVisibleEdit(true)}
+      >
+        <Text style={styles.buttonText}>Deletar</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+      style={[styles.button, styles.editButton]}
+      onPress={onPressVoltar}
+    >
+      <Text style={styles.buttonText}>Voltar para Home</Text>
+    </TouchableOpacity>
 
       {/* Modal de Edição */}
       <Modal
@@ -339,21 +442,22 @@ export default function DetalharMovimentacoes({ route, navigation }) {
             {/* Descrição da movimentação */}
             <Text style={styles.label}>Descrição da Movimentação:</Text>
             <TextInput
-              style={styles.input}
-              value={novoNomeMovimentacao}
-              onChangeText={setNovoNomeMovimentacao}
-              placeholder="Descrição da movimentação"
-            />
+  style={[styles.input, errors.nomeMovimentacao && styles.errorInput]}
+  value={novoNomeMovimentacao}
+  onChangeText={setNovoNomeMovimentacao}
+  placeholder="Descrição da movimentação"
+/>
+
 
             {/* Valor da movimentação */}
             <Text style={styles.label}>Valor da Movimentação:</Text>
             <TextInput
-              style={styles.input}
-              value={novoValorMovimentacao}
-              onChangeText={setNovoValorMovimentacao}
-              placeholder="Valor da movimentação"
-              keyboardType="numeric"
-            />
+  style={[styles.input, errors.valorMovimentacao && styles.errorInput]}
+  value={novoValorMovimentacao}
+  onChangeText={setNovoValorMovimentacao}
+  placeholder="Valor da movimentação"
+  keyboardType="numeric"
+/>
 
             {/* Data da movimentação */}
 
@@ -379,34 +483,23 @@ export default function DetalharMovimentacoes({ route, navigation }) {
               />
             )}
 
+{errors.dataMovimentacao && (
+  <Text style={styles.errorText}>Selecione uma data</Text>
+)}
+
             {/* Conta de Origem */}
             <Text style={styles.label}>Conta de Origem:</Text>
-            {/* <View style={{ flex: 1, padding: 0, margin: 0 }}> */}
+
             <Picker
         selectedValue={novaContaOrigem}
         onValueChange={(itemValue, itemIndex) => setNovaContaOrigem(itemValue)}
-        style={styles.picker}
+        style={[styles.picker, errors.contaOrigem && styles.errorPicker]}
       >
         <Picker.Item label="Selecione uma conta" value="" />
         {contas.map(conta => (
           <Picker.Item key={conta.id} label={conta.nome} value={conta.id} />
         ))}
       </Picker>
-      {/* </View> */}
-            {/* <Picker
-              selectedValue={novaContaOrigem}
-              onValueChange={(itemValue, itemIndex) =>
-                setNovaContaOrigem(itemValue)
-              }
-            >
-              {contas.map((conta) => (
-                <Picker.Item
-                  key={conta.id}
-                  label={conta.nome}
-                  value={conta.id}
-                />
-              ))}
-            </Picker> */}
 
             {showContaDestino && (
               <>
@@ -416,9 +509,9 @@ export default function DetalharMovimentacoes({ route, navigation }) {
                   onValueChange={(itemValue, itemIndex) =>
                     setNovaContaDestino(itemValue)
                   }
-                  style={styles.picker}
+                  style={[styles.picker, errors.contaDestino && styles.errorPicker]}
                 >
-                  {/* Renderizar as opções de contas destino disponíveis */}
+                  <Picker.Item label="Selecione uma conta" value="" />
                   {contas.map((conta) => (
                     <Picker.Item
                       key={conta.id}
@@ -438,7 +531,7 @@ export default function DetalharMovimentacoes({ route, navigation }) {
               onValueChange={(itemValue, itemIndex) =>
                 setNovaCategoria(itemValue)
               }
-              style={styles.picker}
+              style={[styles.picker, errors.categoria && styles.errorPicker]}
             >
               <Picker.Item label="Selecione uma categoria" value="" />
               {categorias.map((categoria) => (
@@ -575,5 +668,21 @@ const styles = StyleSheet.create({
   },
   opcaoTextSelected: {
     color: "#fff",
+  },
+  errorInput: {
+    borderColor: "red",
+    borderWidth: 2,
+  },
+
+  errorPicker: {
+    borderColor: "red",
+    borderWidth: 2,
+    borderRadius: 5,
+  },
+
+  errorText: {
+    color: "red",
+    fontSize: 12,
+    marginTop: 5,
   },
 });
