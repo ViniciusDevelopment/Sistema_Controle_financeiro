@@ -25,7 +25,6 @@ export default function Contas({ route, navigation }) {
   const [novoNomeConta, setNovoNomeConta] = useState('');
   const [contaEditando, setContaEditando] = useState(null);
 
-
   const abrirModalEdicao = (conta) => {
     setContaEditando(conta);
     setNovoNomeConta(conta.nome);
@@ -142,32 +141,45 @@ export default function Contas({ route, navigation }) {
   };
 
   const cadastrarConta = async () => {
-    try {
-      const config = {
-        headers: {
-          Authorization: `Token ${token}`,
-        },
-      };
 
-      const response = await axios.post(
-        "http://172.16.4.17:8000/api/Financa/conta/",
-        { user: validationResultLocal.id, nome: nomeConta },
-        config
-      );
-
-      Alert.alert("Sucesso", "Conta cadastrada com sucesso!");
-      setNomeConta("");
-      setModalVisible(false);
-      fetchContas();
-    } catch (error) {
-      console.error("Erro ao cadastrar conta:", error);
-      Alert.alert("Erro", "Falha ao cadastrar conta");
+    if (nomeConta.trim() === "") {
+      alert("O campo Nome da Conta é obrigatório.");
+      return;
     }
+ 
+      try {
+        const config = {
+          headers: {
+            Authorization: `Token ${token}`,
+          },
+        };
+  
+        const response = await axios.post(
+          "http://172.16.4.17:8000/api/Financa/conta/",
+          { user: validationResultLocal.id, nome: nomeConta },
+          config
+        );
+  
+        Alert.alert("Sucesso", "Conta cadastrada com sucesso!");
+        setNomeConta("");
+        setModalVisible(false);
+        fetchContas();
+      } catch (error) {
+        console.error("Erro ao cadastrar conta:", error);
+        Alert.alert("Erro", "Falha ao cadastrar conta");
+      }
+    
   };
 
 
   const handleAtualizarConta = async () => {
     // Aqui você deve fazer a requisição PUT para atualizar a conta
+
+    if (novoNomeConta.trim() === "") {
+      alert("O campo Nome da Conta é obrigatório.");
+      return;
+    }
+
     if (!contaEditando || novoNomeConta === '') {
       return; // Verificação básica para garantir que tenha uma conta selecionada e um novo nome preenchido
     }
@@ -223,11 +235,11 @@ export default function Contas({ route, navigation }) {
           fecharModalDelete();
         } else {
           console.error('Falha ao deletar conta:', response.status);
-          alert('Falha ao deletar conta:', response.status)
+          alert('A conta possui uma movimentação: Não é possível deletar a conta')
         }
       })
       .catch(error => {
-        console.error('Erro ao deletar conta:', error);
+        console.error('A conta possui uma movimentação:', " Não é possível deletar a conta");
       });
   };
 
@@ -299,27 +311,37 @@ export default function Contas({ route, navigation }) {
         visible={modalVisible2}
         onRequestClose={fecharModalEdicao}
       >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
+        <View style={styles.modalcategoriainer}>
+          <View style={styles.modalView}>
             <Text>Editar Conta</Text>
+            <Text style={styles.label}>Nome:</Text>
             <TextInput
-              style={styles.input}
+               style={[
+                styles.input
+              ]}
               value={novoNomeConta}
               onChangeText={setNovoNomeConta}
-              placeholder="Novo nome da conta"
+              placeholder="Digite o nome da conta"
             />
+
             <View style={styles.modalButtons}>
-              <TouchableOpacity onPress={fecharModalEdicao} style={[styles.button, { backgroundColor: 'red' }]}>
+              <TouchableOpacity
+                onPress={fecharModalEdicao}
+                style={[styles.button2, styles.cancelButton]}
+              >
                 <Text style={styles.buttonText}>Cancelar</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={handleAtualizarConta} style={[styles.button, { backgroundColor: 'green' }]}>
-                <Text style={styles.buttonText}>Salvar</Text>
+              <TouchableOpacity
+                onPress={handleAtualizarConta}
+                style={[styles.button2, styles.saveButton]}
+              >
+                <Text style={styles.buttonText}>Alterar</Text>
               </TouchableOpacity>
             </View>
+            
           </View>
         </View>
       </Modal>
-
 
       <Modal
         animationType="slide"
@@ -327,19 +349,27 @@ export default function Contas({ route, navigation }) {
         visible={modalVisible3}
         onRequestClose={fecharModalDelete}
       >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text>Deletar Conta</Text>
+        <View style={styles.modalcategoriainer}>
+          <View style={styles.modalView}>
+          <Text>Deletar Conta</Text>
             <Text>Tem certeza que deseja deletar a conta {contaEditando?.nome}?</Text>
+            
 
             <View style={styles.modalButtons}>
-              <TouchableOpacity onPress={fecharModalDelete} style={[styles.button, { backgroundColor: 'red' }]}>
+              <TouchableOpacity
+                onPress={fecharModalDelete}
+                style={[styles.button2, styles.cancelButton]}
+              >
                 <Text style={styles.buttonText}>Cancelar</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={handleDeletarConta} style={[styles.button, { backgroundColor: 'green' }]}>
+              <TouchableOpacity
+                onPress={handleDeletarConta}
+                style={[styles.button2, styles.saveButton]}
+              >
                 <Text style={styles.buttonText}>Deletar</Text>
               </TouchableOpacity>
             </View>
+            
           </View>
         </View>
       </Modal>
@@ -363,17 +393,27 @@ export default function Contas({ route, navigation }) {
           <View style={styles.modalView}>
             <Text style={styles.label}>Nome da Conta:</Text>
             <TextInput
-              style={styles.input}
+               style={[
+                styles.input
+              ]}
               value={nomeConta}
               onChangeText={setNomeConta}
               placeholder="Digite o nome da conta"
             />
-            <Button title="Cadastrar Conta" onPress={cadastrarConta} />
-            <Button
-              title="Cancelar"
-              onPress={() => setModalVisible(false)}
-              color="red"
-            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                onPress={() => setModalVisible(false)}
+                style={[styles.button2, styles.cancelButton]}
+              >
+                <Text style={styles.buttonText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={cadastrarConta}
+                style={[styles.button2, styles.saveButton]}
+              >
+                <Text style={styles.buttonText}>Cadastrar</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -383,6 +423,12 @@ export default function Contas({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
+  modalcategoriainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "white",
+  },
   container: {
     flex: 1,
     backgroundColor: "#fff",
@@ -412,6 +458,16 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
+  
+
+
+  picker: {
+    width: 100,
+  },
+  addButtonText: {
+    color: "#fff",
+    fontSize: 18,
+  },
   addButton: {
     backgroundColor: "#007BFF",
     padding: 16,
@@ -420,9 +476,42 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginBottom: 16,
   },
-  addButtonText: {
-    color: "#fff",
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 20,
+  },
+  label: {
     fontSize: 18,
+    fontWeight: "bold",
+    marginTop: 10,
+  },
+  value: {
+    fontSize: 18,
+    color: "#333",
+    marginBottom: 10,
+  },
+  button: {
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 8,
+    width: "100%",
+    height: 40,
+    marginBottom: 10,
+  },
+  editButton: {
+    backgroundColor: "#f1c40f",
+  },
+  lastButton: {
+    backgroundColor: "#3498db",
+  },
+  deleteButton: {
+    backgroundColor: "#e74c3c",
+  },
+
+  buttonText: {
+    color: "#fff",
+    fontWeight: "bold",
   },
   modalContainer: {
     flex: 1,
@@ -430,31 +519,83 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "white",
   },
-  modalView: {
-    width: "80%",
-    backgroundColor: "white",
-    borderRadius: 20,
-    padding: 35,
+  modalContent: {
+    width: "90%",
+    height: "100%",
+    padding: 20,
+    backgroundColor: "#fff",
+    borderRadius: 10,
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
   },
-  label: {
-    fontSize: 18,
-    marginBottom: 8,
+  modalButtons: {
+    backgroundColor: "#fff",
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginTop: 20,
+    width: "100%",
+  },
+  button2: {
+    flex: 1,
+    height: 50,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 20,
+  },
+  cancelButton: {
+    backgroundColor: "#e74c3c",
+    marginRight: 10,
+  },
+  saveButton: {
+    backgroundColor: "#2ecc71",
+    marginLeft: 10,
   },
   input: {
-    height: 40,
     width: "100%",
+    padding: 10,
     borderColor: "#ccc",
     borderWidth: 1,
+    borderRadius: 5,
+    marginTop: 10,
+  },
+  opcoesContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 16,
-    paddingHorizontal: 8,
+  },
+  opcaoButton: {
+    flex: 1,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 8,
+    marginHorizontal: 4,
+    backgroundColor: "#fff",
+  },
+  opcaoButtonSelected: {
+    backgroundColor: "#007AFF",
+  },
+  opcaoText: {
+    color: "#007AFF",
+    fontWeight: "bold",
+  },
+  opcaoTextSelected: {
+    color: "#fff",
+  },
+  errorInput: {
+    borderColor: "red",
+    borderWidth: 2,
+  },
+
+  errorPicker: {
+    borderColor: "red",
+    borderWidth: 2,
+    borderRadius: 5,
+  },
+
+  errorText: {
+    color: "red",
+    fontSize: 12,
+    marginTop: 5,
   },
 });

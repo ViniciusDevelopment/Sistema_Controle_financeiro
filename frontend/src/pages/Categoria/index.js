@@ -95,6 +95,11 @@ export default function Categoria({ route, navigation }) {
   };
 
   const handleAtualizarCategoria = async () => {
+
+    if (novoNomeCategoria.trim() === "" || novoTipoCategoria.trim() === ""){
+      alert("O campo Nome e tipo são obrigatórios.");
+      return;
+    }
     // Aqui você deve fazer a requisição PUT para atualizar a categoria
     if (!categoriaEditando || novoNomeCategoria === "") {
       return; // Verificação básica para garantir que tenha uma categoria selecionada e um novo nome preenchido
@@ -190,6 +195,11 @@ export default function Categoria({ route, navigation }) {
   }, [token, validationResultLocal]);
 
   const cadastrarCategoria = async () => {
+
+    if (nome.trim() === "" || tipo.trim() === ""){
+      alert("O campo Nome e tipo são obrigatórios.");
+      return;
+    }
     try {
       console.log(validationResult);
       const config = {
@@ -580,21 +590,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "white",
   },
-  // modalView: {
-  //   width: "80%",
-  //   backgroundColor: "white",
-  //   borderRadius: 20,
-  //   padding: 35,
-  //   alignItems: "center",
-  //   shadowColor: "#000",
-  //   shadowOffset: {
-  //     width: 0,
-  //     height: 2,
-  //   },
-  //   shadowOpacity: 0.25,
-  //   shadowRadius: 4,
-  //   elevation: 5,
-  // },
   label: {
     fontSize: 18,
     marginBottom: 8,

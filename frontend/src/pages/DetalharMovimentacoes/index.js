@@ -98,20 +98,6 @@ export default function DetalharMovimentacoes({ route, navigation }) {
       console.error('Error fetching movimentacao:', error);
     }
   };
-  
-  // const fetchCategorias = async () => {
-  //   try {
-  //     const responseCategorias = await axios.get('http://172.16.4.17:8000/api/Financa/categoria/', {
-  //       headers: {
-  //         Authorization: `Token ${token}`
-  //       }
-  //     });
-  //     setCategorias(responseCategorias.data);
-  //   } catch (error) {
-  //     console.error('Error fetching categorias:', error);
-  //     setError('Error fetching categorias');
-  //   }
-  // };
 
   const validateFields = () => {
     let formIsValid = true;
