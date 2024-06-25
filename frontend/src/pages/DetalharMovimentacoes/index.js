@@ -309,6 +309,8 @@ export default function DetalharMovimentacoes({ route, navigation }) {
       setNovaCategoria(""); // Reseta a categoria quando o tipo de movimentação muda
     }
     else{
+      setTipoMovimentacao(tipo_recebido);
+      setShowContaDestino(tipo_recebido === "transferencia");
       setNovaCategoria(tipo)
     }
   };
