@@ -45,7 +45,7 @@ export default function Movimentacao({ route }) {
       newErrors.contaOrigem = true;
     }
 
-    if (!categoriaSelecionada.trim()) {
+    if (!categoriaSelecionada) {
       formIsValid = false;
       newErrors.categoria = true;
     }
@@ -93,12 +93,12 @@ export default function Movimentacao({ route }) {
   useEffect(() => {
     const fetchContas = async () => {
       try {
-        const response = await axios.get('http://172.16.4.17:8000/api/Financa/conta/', {
+        const response = await axios.get(`http://172.16.4.17:8000/api/Financa/GetFinancas/${validationResultLocal.id}/`, {
           headers: {
             Authorization: `Token ${token}`
           }
         });
-        setContas(response.data);
+        setContas(response.data.contas);
       } catch (error) {
         console.error('Erro ao carregar contas:', error);
       }
@@ -211,6 +211,7 @@ export default function Movimentacao({ route }) {
       <Picker
         selectedValue={contaSelecionada}
         onValueChange={(itemValue, itemIndex) => setContaSelecionada(itemValue)}
+        style={[styles.picker, errors.categoria && styles.errorPicker]}
       >
         <Picker.Item label="Selecione uma conta" value="" />
         {contas.map(conta => (
@@ -224,6 +225,7 @@ export default function Movimentacao({ route }) {
           <Picker
             selectedValue={contaDestino}
             onValueChange={(itemValue, itemIndex) => setContaDestino(itemValue)}
+            style={[styles.picker, errors.categoria && styles.errorPicker]}
           >
             <Picker.Item label="Selecione uma conta de destino" value="" />
             {contas.map(conta => (
@@ -237,6 +239,7 @@ export default function Movimentacao({ route }) {
       <Picker
         selectedValue={categoriaSelecionada}
         onValueChange={(itemValue, itemIndex) => setCategoriaSelecionada(itemValue)}
+        style={[styles.picker, errors.categoria && styles.errorPicker]}
       >
         <Picker.Item label="Selecione uma categoria" value="" />
         {categorias.map(categoria => (
