@@ -21,6 +21,13 @@ npm start
 
 ```
 
+
+
+![Logo da Minha Aplicação](./imgs/image.png)
+
+
+
+
 # EXECUTAR O BACKEND:
 ```
 python3 manage.py runserver 172.16.4.17:8000
