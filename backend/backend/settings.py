@@ -76,6 +76,10 @@ TEMPLATES = [
     },
 ]
 
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:8081",
+]
+
 WSGI_APPLICATION = 'backend.wsgi.application'
 
 DATABASES = {

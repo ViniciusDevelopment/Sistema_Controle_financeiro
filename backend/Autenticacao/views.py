@@ -15,6 +15,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.models import Group, Permission, User
 from rest_framework.permissions import AllowAny
 from rest_framework.exceptions import AuthenticationFailed
+from django.contrib.auth import logout
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -31,9 +32,6 @@ class CreateUserAPIView(APIView):
             username = serializer.validated_data.get('username')
             email = serializer.validated_data.get('email')
             password = serializer.validated_data.get('password')
-            # first_name = serializer.validated_data.get('first_name')
-            # Crie o novo usuário
-            # new_user = User.objects.create_user(username=username, email=email, password=password, first_name=first_name)
             new_user = User.objects.create_user(username=username, email=email, password=password)
             return Response({'message': 'User created successfully'}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -42,6 +40,13 @@ class CreateUserAPIView(APIView):
 class UsuarioViewSet(viewsets.ModelViewSet):
     queryset = Usuario.objects.all()
     serializer_class = UsuarioSerializer
+    
+class UserLogout(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        logout(request)
+        return Response({"message": "Logout realizado com sucesso."}, status=status.HTTP_200_OK)
 
 
 

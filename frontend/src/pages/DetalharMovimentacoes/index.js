@@ -370,6 +370,49 @@ export default function DetalharMovimentacoes({ route, navigation }) {
     setShowContaDestino(tipoMovimentacao == "transferencia");
   };
 
+  const renderDatePicker = () => {
+    const handleDateChange = (e) => {
+      const selectedDate = new Date(e.target.value);
+      setNovaDataMovimentacao(selectedDate);
+    };
+    if (Platform.OS === 'web') {
+      return (
+        <input
+          id="date"
+          type="date"
+          value={novaDataMovimentacao.toISOString().split('T')[0]} // Formata para o formato yyyy-mm-dd
+          onChange={handleDateChange}
+        />
+      );
+    } else {
+      return (
+        <>
+               <TouchableOpacity onPress={() => setShowDatePicker(true)}>
+              <TextInput
+                style={styles.input}
+                value={novaDataMovimentacao.toDateString()}
+                editable={false}
+              />
+            </TouchableOpacity>
+            {showDatePicker && (
+              <DateTimePicker
+                testID="dateTimePicker"
+                value={novaDataMovimentacao}
+                mode="date"
+                is24Hour={true}
+                display="default"
+                onChange={(event, selectedDate) => {
+                  setShowDatePicker(false);
+                  setNovaDataMovimentacao(selectedDate || novaDataMovimentacao);
+                }}
+              />
+            )}
+
+        </>
+      );
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Detalhes da Movimentação</Text>
@@ -544,7 +587,8 @@ export default function DetalharMovimentacoes({ route, navigation }) {
             {/* Data da movimentação */}
 
             <Text style={styles.label}>Data da Movimentação:</Text>
-            <TouchableOpacity onPress={() => setShowDatePicker(true)}>
+            {renderDatePicker()}
+            {/* <TouchableOpacity onPress={() => setShowDatePicker(true)}>
               <TextInput
                 style={styles.input}
                 value={novaDataMovimentacao.toDateString()}
@@ -563,7 +607,7 @@ export default function DetalharMovimentacoes({ route, navigation }) {
                   setNovaDataMovimentacao(selectedDate || novaDataMovimentacao);
                 }}
               />
-            )}
+            )} */}
 
             {errors.dataMovimentacao && (
               <Text style={styles.errorText}>Selecione uma data</Text>

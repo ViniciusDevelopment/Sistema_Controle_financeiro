@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.urls import include, path
 # from .views import AutenticacaoView
-from .views import CreateUserAPIView, TokenView, UserViewSet, UsuarioViewSet
+from .views import CreateUserAPIView, TokenView, UserLogout, UserViewSet, UsuarioViewSet
 from rest_framework import routers
 from rest_framework.authtoken.views import obtain_auth_token
 from rest_framework.authtoken import views
@@ -18,4 +18,5 @@ urlpatterns = [
     path('/login', views.obtain_auth_token),
     path('/create-user', CreateUserAPIView.as_view(), name='create-user'),
     path('/tokenvalidation', TokenView.as_view(), name='token-validation'),
+    path('/logout', UserLogout.as_view(), name='logout'),
 ]
