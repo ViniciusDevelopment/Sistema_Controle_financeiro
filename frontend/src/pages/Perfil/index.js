@@ -36,9 +36,9 @@ const ProfileScreen = ({ navigation, route }) => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Perfil</Text>
-      <View style={styles.buttonContainer}>
+      {/* <View style={styles.buttonContainer}>
         <Button title="Editar Perfil" onPress={goToEditProfile} />
-      </View>
+      </View> */}
       <View style={styles.buttonContainer}>
         <Button title="Contas" onPress={goToAccounts} />
       </View>

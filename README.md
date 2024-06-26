@@ -35,13 +35,11 @@ Este projeto consiste em uma aplicação de gestão financeira para controle de 
 - **RF-05:** Cadastro e gerenciamento de contas associadas às movimentações.
 - **RF-06:** Logout.
 
-
-
+# Diagrama de classe
 ![Logo da Minha Aplicação](./imgs/image.png)
 
+# Diagrama de caso de uso
 ![Logo da Minha Aplicação2](./imgs/image%20copy.png)
-
-
 
 
 # EXECUTAR O BACKEND:
