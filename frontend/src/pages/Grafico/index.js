@@ -1,8 +1,8 @@
 // Grafico.js
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { PieChart } from 'react-native-chart-kit';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions, ScrollView } from 'react-native';
+import { PieChart, BarChart } from 'react-native-chart-kit';
 import { useNavigation } from '@react-navigation/native';
 
 const GraphScreen = ({ route }) => {
@@ -12,6 +12,7 @@ const GraphScreen = ({ route }) => {
   const [totalReceitas, setTotalReceitas] = useState(0);
   const [totalDespesas, setTotalDespesas] = useState(0);
   const [chartData, setChartData] = useState([]);
+  const [dailyExpenses, setDailyExpenses] = useState([]);
 
   const fetchData = async (periodo) => {
     try {
@@ -24,6 +25,8 @@ const GraphScreen = ({ route }) => {
       setSaldoConta(data.saldo_conta || 0);
       setTotalReceitas(data.total_receitas || 0);
       setTotalDespesas(data.total_despesas || 0);
+
+      // Configuração dos dados para o gráfico de pizza
       const receita = data.movimentacoes_por_tipo?.receita || 0;
       const despesa = data.movimentacoes_por_tipo?.despesa || 0;
       const transferencia = data.movimentacoes_por_tipo?.transferencia || 0;
@@ -33,6 +36,13 @@ const GraphScreen = ({ route }) => {
         { name: 'Transferência', value: transferencia, color: '#f1c40f' }
       ];
       setChartData(chartData);
+
+      // Configuração dos dados para o gráfico de barras (despesas diárias)
+      const dailyExpensesData = Object.keys(data.despesas_diarias).map((date) => ({
+        date: new Date(date),
+        value: data.despesas_diarias[date]
+      }));
+      setDailyExpenses(dailyExpensesData);
     } catch (error) {
       console.error('Erro ao buscar dados:', error);
     }
@@ -47,27 +57,56 @@ const GraphScreen = ({ route }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <PeriodButtons onSelectPeriod={handlePeriodSelect} />
-      <InfoCard label="Saldo Total" value={saldoConta} />
-      <InfoCard label="Total de Receitas" value={totalReceitas} />
-      <InfoCard label="Total de Despesas" value={totalDespesas} />
-      <Text style={styles.chartTitle}>Distribuição por Tipo de Movimentação</Text>
-      <PieChart
-        data={chartData}
-        width={300}
-        height={200}
-        chartConfig={{
-          backgroundGradientFrom: '#ffffff',
-          backgroundGradientTo: '#ffffff',
-          color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-        }}
-        accessor="value"
-        backgroundColor="transparent"
-        paddingLeft="15"
-        absolute
-      />
-    </View>
+    <ScrollView contentContainerStyle={styles.scrollViewContent}>
+      <View style={styles.container}>
+        <PeriodButtons onSelectPeriod={handlePeriodSelect} />
+        <InfoCard label="Saldo Total" value={saldoConta} />
+        <InfoCard label="Total de Receitas" value={totalReceitas} />
+        <InfoCard label="Total de Despesas" value={totalDespesas} />
+        <Text style={styles.chartTitle}>Distribuição por Tipo de Movimentação</Text>
+        <PieChart
+          data={chartData}
+          width={300}
+          height={200}
+          chartConfig={{
+            backgroundGradientFrom: '#ffffff',
+            backgroundGradientTo: '#ffffff',
+            color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+          }}
+          accessor="value"
+          backgroundColor="transparent"
+          paddingLeft="15"
+          absolute
+        />
+        <Text style={styles.chartTitle}>Despesas Diárias (Gráfico de Barras)</Text>
+        <BarChart
+          data={{
+            labels: dailyExpenses.map(entry => entry.date.toLocaleDateString()),
+            datasets: [{
+              data: dailyExpenses.map(entry => entry.value),
+              color: (opacity = 1) => `rgba(231, 76, 60, ${opacity})`,
+              strokeWidth: 2
+            }]
+          }}
+          width={Dimensions.get('window').width - 20}
+          height={220}
+          chartConfig={{
+            backgroundGradientFrom: '#ffffff',
+            backgroundGradientTo: '#ffffff',
+            decimalPlaces: 2,
+            color: (opacity = 1) => `rgba(231, 76, 60, ${opacity})`,
+            labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+            style: {
+              borderRadius: 16
+            },
+            propsForVerticalLabels: {
+              fontSize: 10
+            }
+          }}
+          verticalLabelRotation={30}
+        />
+      </View>
+    </ScrollView>
   );
 };
 
@@ -105,6 +144,10 @@ const InfoCard = ({ label, value }) => {
 };
 
 const styles = StyleSheet.create({
+  scrollViewContent: {
+    flexGrow: 1,
+    paddingVertical: 20,
+  },
   container: {
     flex: 1,
     padding: 20,
@@ -151,6 +194,10 @@ const styles = StyleSheet.create({
 });
 
 export default GraphScreen;
+
+
+
+
 
 
 
