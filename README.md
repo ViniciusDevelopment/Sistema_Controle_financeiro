@@ -33,18 +33,12 @@ Este projeto consiste em uma aplicação de gestão financeira para controle de 
 - **RF-03:** Criação, edição e exclusão de categorias para movimentações financeiras.
 - **RF-04:** Visualização de gráficos com análise de receitas e despesas por período.
 - **RF-05:** Cadastro e gerenciamento de contas associadas às movimentações.
-
-## Requisitos Não Funcionais
-
-- **RNF-01:** Segurança: Implementação de autenticação JWT para proteger endpoints sensíveis.
-- **RNF-02:** Desempenho: Respostas rápidas em consultas de dados através de otimizações de consulta e uso eficiente de cache.
-- **RNF-03:** Usabilidade: Interface intuitiva e responsiva tanto para web quanto para dispositivos móveis.
-- **RNF-04:** Escalabilidade: Capacidade de lidar com um grande volume de transações e usuários simultâneos.
-- **RNF-05:** Manutenibilidade: Código modular e bem documentado para facilitar futuras atualizações e manutenções.
+- **RF-06:** Logout.
 
 
 
 ![Logo da Minha Aplicação](./imgs/image.png)
+![Logo da Minha Aplicação](./imgs/image copy.png)
 
 
 
