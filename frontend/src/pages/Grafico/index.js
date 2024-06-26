@@ -1,19 +1,20 @@
-// // Grafico.js
+// Grafico.js
 
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { useNavigation } from "@react-navigation/native";
+import { PieChart } from 'react-native-chart-kit';
+import { useNavigation } from '@react-navigation/native';
 
 const GraphScreen = ({ route }) => {
-    const { token } = route.params;
+  const { token } = route.params;
   const [period, setPeriod] = useState('hoje');
   const [saldoConta, setSaldoConta] = useState(0);
   const [totalReceitas, setTotalReceitas] = useState(0);
   const [totalDespesas, setTotalDespesas] = useState(0);
+  const [chartData, setChartData] = useState([]);
 
   const fetchData = async (periodo) => {
     try {
-      console.log(token)
       const response = await fetch(`http://172.16.4.17:8000/api/Financa/GetMovimentacoesGraficos/1/?periodo=${periodo}`, {
         headers: {
           Authorization: `Token ${token}`
@@ -23,9 +24,17 @@ const GraphScreen = ({ route }) => {
       setSaldoConta(data.saldo_conta || 0);
       setTotalReceitas(data.total_receitas || 0);
       setTotalDespesas(data.total_despesas || 0);
+      const receita = data.movimentacoes_por_tipo?.receita || 0;
+      const despesa = data.movimentacoes_por_tipo?.despesa || 0;
+      const transferencia = data.movimentacoes_por_tipo?.transferencia || 0;
+      const chartData = [
+        { name: 'Receita', value: receita, color: '#2ecc71' },
+        { name: 'Despesa', value: despesa, color: '#e74c3c' },
+        { name: 'Transferência', value: transferencia, color: '#f1c40f' }
+      ];
+      setChartData(chartData);
     } catch (error) {
       console.error('Erro ao buscar dados:', error);
-      console.log(token)
     }
   };
 
@@ -43,6 +52,21 @@ const GraphScreen = ({ route }) => {
       <InfoCard label="Saldo Total" value={saldoConta} />
       <InfoCard label="Total de Receitas" value={totalReceitas} />
       <InfoCard label="Total de Despesas" value={totalDespesas} />
+      <Text style={styles.chartTitle}>Distribuição por Tipo de Movimentação</Text>
+      <PieChart
+        data={chartData}
+        width={300}
+        height={200}
+        chartConfig={{
+          backgroundGradientFrom: '#ffffff',
+          backgroundGradientTo: '#ffffff',
+          color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+        }}
+        accessor="value"
+        backgroundColor="transparent"
+        paddingLeft="15"
+        absolute
+      />
     </View>
   );
 };
@@ -117,9 +141,18 @@ const styles = StyleSheet.create({
   value: {
     fontSize: 18,
   },
+  chartTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 20,
+    marginBottom: 10,
+    alignSelf: 'center',
+  },
 });
 
 export default GraphScreen;
+
+
 
 
 
