@@ -1,22 +1,40 @@
 // Grafico.js
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions, ScrollView, Platform } from 'react-native';
 import { PieChart, BarChart } from 'react-native-chart-kit';
 import { useNavigation } from '@react-navigation/native';
+import axios from 'axios';
 
 const GraphScreen = ({ route }) => {
   const { token } = route.params;
   const [period, setPeriod] = useState('hoje');
+  const [validationResultLocal, setValidationResultLocal] = useState(null);
   const [saldoConta, setSaldoConta] = useState(0);
   const [totalReceitas, setTotalReceitas] = useState(0);
   const [totalDespesas, setTotalDespesas] = useState(0);
   const [chartData, setChartData] = useState([]);
   const [dailyExpenses, setDailyExpenses] = useState([]);
 
+
+  useEffect(() => {
+    const validateToken = async () => {
+      try {
+        const response = await axios.post('http://172.16.4.17:8000/api/Autenticacao/tokenvalidation', { token });
+        setValidationResultLocal(response.data);
+      } catch (error) {
+        console.error('Error validating token:', error);
+        setValidationResultLocal({ error: 'Failed to validate token' });
+      }
+    };
+
+    validateToken();
+  }, [token, setValidationResultLocal]);
+
   const fetchData = async (periodo) => {
     try {
-      const response = await fetch(`http://172.16.4.17:8000/api/Financa/GetMovimentacoesGraficos/1/?periodo=${periodo}`, {
+      console.log(validationResultLocal.id)
+      const response = await fetch(`http://172.16.4.17:8000/api/Financa/GetMovimentacoesGraficos/${validationResultLocal.id}/?periodo=${periodo}`, {
         headers: {
           Authorization: `Token ${token}`
         }
@@ -44,13 +62,13 @@ const GraphScreen = ({ route }) => {
       }));
       setDailyExpenses(dailyExpensesData);
     } catch (error) {
-      console.error('Erro ao buscar dados:', error);
+      console.log('Buscar dados:', error);
     }
   };
 
   useEffect(() => {
     fetchData(period);
-  }, [period]);
+  }, [period, validationResultLocal]);
 
   const handlePeriodSelect = (selectedPeriod) => {
     setPeriod(selectedPeriod);
@@ -120,7 +138,7 @@ const PeriodButtons = ({ onSelectPeriod }) => {
   ];
 
   return (
-    <View style={styles.buttonsContainer}>
+    <View style={[styles.buttonsContainer, Platform.OS === 'android' && styles.buttonsContainerMobile]}>
       {periods.map((period) => (
         <TouchableOpacity
           key={period.value}
@@ -132,6 +150,7 @@ const PeriodButtons = ({ onSelectPeriod }) => {
       ))}
     </View>
   );
+
 };
 
 const InfoCard = ({ label, value }) => {
@@ -157,6 +176,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginBottom: 10,
+  },
+  buttonsContainerMobile: {
+    flexDirection: 'column',
+    alignItems: 'center',
   },
   button: {
     backgroundColor: '#3498db',

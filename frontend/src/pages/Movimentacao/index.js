@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, Button, StyleSheet, Alert, TouchableOpacity, Platform } from 'react-native';
 import axios from 'axios';
 import { Picker } from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -93,6 +93,7 @@ export default function Movimentacao({ route }) {
   useEffect(() => {
     const fetchContas = async () => {
       try {
+        console.log(validationResultLocal.id)
         const response = await axios.get(`http://172.16.4.17:8000/api/Financa/GetFinancas/${validationResultLocal.id}/`, {
           headers: {
             Authorization: `Token ${token}`
@@ -100,7 +101,7 @@ export default function Movimentacao({ route }) {
         });
         setContas(response.data.contas);
       } catch (error) {
-        console.error('Erro ao carregar contas:', error);
+        console.log('Erro ao carregar contas:', error);
       }
     };
 
@@ -132,7 +133,7 @@ export default function Movimentacao({ route }) {
       categoria: Number(categoriaSelecionada),
       valor: Number(valor),
       descricao: descricao,
-      movimentado_em: dataMovimentacao.toISOString()
+      movimentado_em: dataMovimentacao.toISOString().split('T')[0]
     };
   
     if (tipoMovimentacao === 'transferencia') {
@@ -183,6 +184,48 @@ export default function Movimentacao({ route }) {
     // Exibir o campo de conta destino apenas quando for uma transferência
     setShowContaDestino(tipo === 'transferencia');
   };
+
+  const renderDatePicker = () => {
+    if (Platform.OS === 'web') {
+      return (
+        <input
+          id="date"
+          type="date"
+          value={dataMovimentacao.toISOString().split('T')[0]} // Formata para o formato yyyy-mm-dd
+          onChange={(e) => setDataMovimentacao(new Date(e.target.value))}
+        />
+      );
+    } else {
+      return (
+        <>
+          <TouchableOpacity onPress={() => setShowDatePicker(true)}>
+            <TextInput
+              style={[
+                styles.input,
+                errors.nomeMovimentacao && styles.errorInput,
+              ]}
+              value={dataMovimentacao.toDateString()}
+              editable={false}
+            />
+          </TouchableOpacity>
+          {showDatePicker && (
+            <DateTimePicker
+              testID="dateTimePicker"
+              value={dataMovimentacao}
+              mode="date"
+              is24Hour={true}
+              display="default"
+              onChange={(event, selectedDate) => {
+                setShowDatePicker(false);
+                setDataMovimentacao(selectedDate || dataMovimentacao);
+              }}
+            />
+          )}
+        </>
+      );
+    }
+  };
+  
 
   return (
     <View style={styles.container}>
@@ -235,6 +278,8 @@ export default function Movimentacao({ route }) {
         </>
       )}
 
+
+
       <Text style={styles.label}>Categoria:</Text>
       <Picker
         selectedValue={categoriaSelecionada}
@@ -271,7 +316,8 @@ export default function Movimentacao({ route }) {
       />
 
       <Text style={styles.label}>Data da Movimentação:</Text>
-      <TouchableOpacity onPress={() => setShowDatePicker(true)}>
+      {renderDatePicker()}
+      {/* <TouchableOpacity onPress={() => setShowDatePicker(true)}>
         <TextInput
            style={[
             styles.input,
@@ -293,7 +339,7 @@ export default function Movimentacao({ route }) {
             setDataMovimentacao(selectedDate || dataMovimentacao);
           }}
         />
-      )}
+      )} */}
 
       <Button title="Cadastrar Movimentação" onPress={cadastrarMovimentacao} />
     </View>

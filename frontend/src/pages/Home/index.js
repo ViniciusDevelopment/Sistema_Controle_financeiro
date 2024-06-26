@@ -233,12 +233,15 @@ export default function Home({ route }) {
 
   const formatarDataBrasileira = (dataISO) => {
     const data = new Date(dataISO);
+    // Ajusta o fuso horário para UTC para evitar discrepâncias
+    data.setMinutes(data.getMinutes() + data.getTimezoneOffset());
     return format(data, "dd/MM/yyyy");
   };
 
   const formatarDataPorExtenso = (dataISO) => {
     const data = new Date(dataISO);
     const options = { day: 'numeric', month: 'long', year: 'numeric' };
+    data.setMinutes(data.getMinutes() + data.getTimezoneOffset());
     return data.toLocaleDateString('pt-BR', options);
   };
 
