@@ -56,7 +56,6 @@ class TokenView(APIView):
     def post(self, request):
         token = request.data.get('token')  # Obter o token do corpo da requisição
         try:
-            # Decodificar o token para obter o usuário
             token_obj = Token.objects.get(key=token)
             user = token_obj.user
             
