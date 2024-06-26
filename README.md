@@ -38,7 +38,9 @@ Este projeto consiste em uma aplicação de gestão financeira para controle de 
 
 
 ![Logo da Minha Aplicação](./imgs/image.png)
-![Logo da Minha Aplicação](./imgs/image copy.png)
+
+![Logo da Minha Aplicação2](./imgs/image%20copy.png)
+
 
 
 
