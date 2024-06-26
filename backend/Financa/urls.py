@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.urls import include, path
-from .views import AlterarMovimentacao, CadastrarMovimentacao, CategoriaViewSet, ContaViewSet, GetCategoriaTipo, MovimentacaoViewSet, UserDetailView
+from .views import AlterarMovimentacao, CadastrarMovimentacao, CategoriaViewSet, ContaResumoAPIView, ContaViewSet, GetCategoriaTipo, MovimentacaoViewSet, MovimentacoesPaginadas, UserDetailView
 from rest_framework import routers
 from django.conf import settings
 from django.conf.urls.static import static
@@ -20,6 +20,8 @@ urlpatterns = [
     path('/GetCategoriaTipo/<int:user_id>/<str:tipo>/', GetCategoriaTipo.as_view(), name='get_categoria_tipo'),
     path('/CadastrarMovimentacao', CadastrarMovimentacao.as_view()),
     path('/AlterarMovimentacao/<uuid:pk>/', AlterarMovimentacao.as_view()),
+    path('/GetMovimentacoesPaginadas/<int:user_id>/', MovimentacoesPaginadas.as_view()),
+    path('/GetMovimentacoesGraficos/<int:user_id>/', ContaResumoAPIView.as_view()),
 ]
 
 if settings.DEBUG:

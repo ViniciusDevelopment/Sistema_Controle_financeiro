@@ -14,6 +14,7 @@ import Categoria from './src/pages/Categoria';
 import Movimentacao from './src/pages/Movimentacao';
 import Perfil from './src/pages/Perfil';
 import DetalharMovimentacoes from './src/pages/DetalharMovimentacoes';
+import Grafico from './src/pages/Grafico';
 
 const Tab = createBottomTabNavigator();
 
@@ -36,7 +37,7 @@ function MainTabs({ route }) {
       />
       <Tab.Screen
         name="Gráfico"
-        component={Contas}
+        component={Grafico}
         initialParams={{ token, validationResult }}
         options={{
           tabBarIcon: ({ color, size }) => (
